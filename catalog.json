@@ -1,12 +1,43 @@
 {
   "song_01": {
+    "type": "audio",
     "title": "Message On My Mobile",
     "audio": "/home/user/Music/song1.mp3",
     "image": "/home/user/Pictures/image1.png"
   },
   "song_02": {
+    "type": "audio",
     "title": "Need A Mouse",
     "audio": "/home/user/Music/song2.mp3",
     "image": "/home/user/Pictures/image2.png"
+  },
+  "video_01": {
+    "type": "video",
+    "title": "Never Gonna Give You Up",
+    "video": "/home/user/Videos/nggyu.bin",
+    "audio": "/home/user/Music/nggyu.mp3"
+  },
+  "nfc_token_03": {
+    "type": "slideshow",
+    "title": "Family Album",
+    "folder": "/opt/music-player/media/photos/",
+    "interval": 5.0,
+    "audio": "/opt/music-player/media/ambient_lofi.mp3"
+  },
+  "nfc_token_04": {
+    "type": "radio",
+    "title": "Synthwave FM",
+    "stream_url": "http://icecast.retro-synth.com/stream.mp3"
+  },
+  "nfc_token_05": {
+    "type": "game",
+    "title": "1-Bit Snake",
+    "game_class": "SnakeGame"
+  },
+  "nfc_token_lyric": {
+    "type": "radio",
+    "title": "RTÉ Lyric FM",
+    "stream_url": "https://www.rte.ie/manifests/lyric.m3u8",
+    "station_freq": "96.7"
   }
 }

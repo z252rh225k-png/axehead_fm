@@ -58,7 +58,7 @@ def start_audio_process(player, video_path):
         print(f"[-] Failed to launch background audio process: {e}")
     return None
 
-def play_preprocessed_bin(bin_path):
+def play_preprocessed_bin(bin_path, display=None, check_tag_removed_fn=None, vol_up_btn=None, vol_down_btn=None, get_volume_fn=None, set_volume_fn=None, audio_path=None):
     """
     Plays a preprocessed Raw 1-Bit (.bin) video file.
     Loads the entire 1-bit frame buffer into memory (or reads sequentially),
@@ -69,12 +69,13 @@ def play_preprocessed_bin(bin_path):
         return
 
     print(f"[+] Initializing OLED display...")
-    try:
-        serial_i2c = i2c(port=1, address=0x3C)
-        display = sh1106(serial_i2c)
-    except Exception as e:
-        print(f"[-] Failed to initialize display: {e}")
-        return
+    if display is None:
+        try:
+            serial_i2c = i2c(port=1, address=0x3C)
+            display = sh1106(serial_i2c)
+        except Exception as e:
+            print(f"[-] Failed to initialize display: {e}")
+            return
 
     # Retro loading screen animation thread
     # Renders a rotating retro cassette tape reels graphic instantly in a background thread 
@@ -199,18 +200,21 @@ def play_preprocessed_bin(bin_path):
     frame_delay = 1.0 / fps
 
     # Find and spawn background audio stream
-    base_path, _ = os.path.splitext(bin_path)
-    audio_source = None
-    for ext in [".mp3", ".wav", ".ogg", ".mp4"]:
-        candidate = base_path + ext
-        if os.path.exists(candidate):
-            audio_source = candidate
-            break
+    audio_source = audio_path
+    if not audio_source:
+        base_path, _ = os.path.splitext(bin_path)
+        # Let's search for any audio source matching the video bin file base name
+        # e.g., if /opt/music-player/media/astley.bin is playing, look for astley.mp3, astley.wav, astley.ogg, astley.mp4
+        for ext in [".mp3", ".wav", ".ogg", ".mp4"]:
+            candidate = base_path + ext
+            if os.path.exists(candidate):
+                audio_source = candidate
+                break
 
     use_pygame_audio = False
     audio_process = None
 
-    if audio_source:
+    if audio_source and os.path.exists(audio_source):
         _, audio_ext = os.path.splitext(audio_source)
         if audio_ext.lower() == '.mp4':
             audio_player = find_audio_player()
@@ -231,7 +235,11 @@ def play_preprocessed_bin(bin_path):
                 if not pygame.mixer.get_init():
                     pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=8192)
             try:
+                # IMPORTANT: Use pygame.mixer.Sound for sound effects and overlapping channels, or make sure we play music.
+                # However, under PipeWire/Pulse on Pi, playing music when another thread is active requires correct loading.
                 pygame.mixer.music.load(audio_source)
+                if get_volume_fn is not None:
+                    pygame.mixer.music.set_volume(get_volume_fn() / 10.0)
                 pygame.mixer.music.play()
                 use_pygame_audio = True
                 print(f"[+] Playing audio stream via Pygame Mixer: {audio_source}")
@@ -240,8 +248,33 @@ def play_preprocessed_bin(bin_path):
                 audio_player = find_audio_player()
                 if audio_player:
                     audio_process = start_audio_process(audio_player, audio_source)
+                    # If mpv/cvlc starts, we aren't using pygame audio
+                    use_pygame_audio = False
     else:
-        print("[-] WARNING: No matching audio file found with the same name. Running video in silent mode!")
+        print(f"[-] WARNING: Audio file not found or path invalid: {audio_source}. Running video in silent mode!")
+
+    # Connect buttons if supplied
+    def handle_vol_up():
+        if get_volume_fn and set_volume_fn:
+            vol = get_volume_fn()
+            if vol < 10:
+                set_volume_fn(vol + 1)
+                pygame.mixer.music.set_volume((vol + 1) / 10.0)
+
+    def handle_vol_down():
+        if get_volume_fn and set_volume_fn:
+            vol = get_volume_fn()
+            if vol > 0:
+                set_volume_fn(vol - 1)
+                pygame.mixer.music.set_volume((vol - 1) / 10.0)
+
+    old_vol_up = None
+    old_vol_down = None
+    if vol_up_btn and vol_down_btn:
+        old_vol_up = vol_up_btn.when_pressed
+        old_vol_down = vol_down_btn.when_pressed
+        vol_up_btn.when_pressed = handle_vol_up
+        vol_down_btn.when_pressed = handle_vol_down
 
     print("[*] Streaming video to OLED. Press Ctrl+C in terminal to stop.")
 
@@ -261,6 +294,11 @@ def play_preprocessed_bin(bin_path):
 
     try:
         while True:
+            # Check if tag was removed
+            if check_tag_removed_fn and check_tag_removed_fn():
+                print("[+] Video interrupted because tag was removed.")
+                break
+
             # Calculate where the video should be based on actual elapsed time (Master Clock)
             if use_pygame_audio:
                 music_pos_ms = pygame.mixer.music.get_pos()
@@ -322,6 +360,9 @@ def play_preprocessed_bin(bin_path):
             print("[+] Stopping background audio player process...")
             audio_process.terminate()
             audio_process.wait()
+        if vol_up_btn and vol_down_btn:
+            vol_up_btn.when_pressed = old_vol_up
+            vol_down_btn.when_pressed = old_vol_down
         print("[+] Video resources released.")
 
 def play_video(video_path):
