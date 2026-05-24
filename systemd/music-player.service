@@ -1,0 +1,20 @@
+[Unit]
+Description=Analog Music Player Service
+After=sound.target network.target pipewire.service
+Requires=sound.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/music-player
+ExecStart=/opt/music-player/venv/bin/music-player
+# Environment variables to force Pygame/SDL to route through PipeWire / PulseAudio
+Environment=SDL_AUDIODRIVER=pulse
+Environment=PULSE_RUNTIME_PATH=/run/user/1000/pulse/
+Restart=always
+RestartSec=5
+# Grants permission to the audio card, GPIO, and serial UART without running as root
+SupplementaryGroups=audio gpio i2c dialout
+
+[Install]
+WantedBy=multi-user.target

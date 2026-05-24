@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "music-player"
+version = "0.1.0"
+description = "Software for a physical music player using Raspberry Pi, NFC and OLED display"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "pygame>=2.0.0",
+    "gpiozero>=1.6.2",
+    "luma.oled>=3.11.0",
+    "pyserial>=3.5",
+    "adafruit-circuitpython-pn532>=1.6.14",
+    "Pillow>=9.0.0",
+    "RPi.GPIO>=0.7.1",
+    "opencv-python-headless>=4.5.0"
+]
+
+[project.scripts]
+music-player = "music_player.player:main"
+music-splash = "music_player.splash:main"
+music-image-test = "music_player.image_test:main"
+music-video = "music_player.video_player:main"
