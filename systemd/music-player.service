@@ -7,7 +7,10 @@ Requires=sound.target
 Type=simple
 User=pi
 WorkingDirectory=/opt/music-player
-ExecStart=/opt/music-player/venv/bin/music-player
+ExecStart=/opt/music-player/venv/bin/python3 -u /opt/music-player/venv/bin/music-player
+StandardOutput=append:/opt/music-player/logs/music-player.log
+StandardError=append:/opt/music-player/logs/music-player.log
+Environment=PYTHONUNBUFFERED=1
 # Environment variables to force Pygame/SDL to route through PipeWire / PulseAudio
 Environment=SDL_AUDIODRIVER=pulse
 Environment=PULSE_RUNTIME_PATH=/run/user/1000/pulse/

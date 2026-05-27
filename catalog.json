@@ -2,20 +2,20 @@
   "song_01": {
     "type": "audio",
     "title": "Message On My Mobile",
-    "audio": "/home/user/Music/song1.mp3",
-    "image": "/home/user/Pictures/image1.png"
+    "audio": "/opt/music-player/media/audio/song1.mp3",
+    "image": "/opt/music-player/media/images/image1.png"
   },
   "song_02": {
     "type": "audio",
     "title": "Need A Mouse",
-    "audio": "/home/user/Music/song2.mp3",
-    "image": "/home/user/Pictures/image2.png"
+    "audio": "/opt/music-player/media/audio/song2.mp3",
+    "image": "/opt/music-player/media/images/image2.png"
   },
   "video_01": {
     "type": "video",
     "title": "Never Gonna Give You Up",
-    "video": "/home/user/Videos/nggyu.bin",
-    "audio": "/home/user/Music/nggyu.mp3"
+    "video": "/opt/music-player/media/video/nggyu.bin",
+    "audio": "/opt/music-player/media/audio/nggyu.mp3"
   },
   "nfc_token_03": {
     "type": "slideshow",

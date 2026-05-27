@@ -99,6 +99,12 @@ echo "[+] Upgrading pip and installing Python package..."
 sudo -u "${USER_NAME}" "${INSTALL_DIR}/venv/bin/pip" install --upgrade pip wheel setuptools
 sudo -u "${USER_NAME}" "${INSTALL_DIR}/venv/bin/pip" install -e "${INSTALL_DIR}"
 
+# 4b. Create logs directory
+echo "[+] Creating logs directory..."
+mkdir -p "${INSTALL_DIR}/logs"
+chown "${USER_NAME}:${GROUP_NAME}" "${INSTALL_DIR}/logs"
+chmod 755 "${INSTALL_DIR}/logs"
+
 # 5. systemd Service Setup
 echo "[+] Copying and enabling systemd service files..."
 
@@ -124,7 +130,8 @@ systemctl restart music-player.service || true
 echo "=============================================================================="
 echo "[+] Installation & Update Complete!"
 echo "    The music-player and music-splash services are now running in the background."
-echo "    You can check status or logs using the following commands:"
+echo "    You can check status or logs using:"
 echo "    - systemctl status music-player"
 echo "    - journalctl -u music-player -f"
+echo "    - tail -f /opt/music-player/logs/music-player.log"
 echo "=============================================================================="
