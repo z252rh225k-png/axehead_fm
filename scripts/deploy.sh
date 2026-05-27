@@ -106,7 +106,7 @@ echo "✅ SSH connection verified."
 
 # Prepare target directories on the Pi
 echo "[*] Creating necessary directories on $PI_HOST..."
-ssh "$PI_USER@$PI_HOST" "sudo mkdir -p $PI_DIR/logs && sudo chown $PI_USER:$PI_USER $PI_DIR/logs && sudo chmod 755 $PI_DIR/logs" || true
+ssh "$PI_USER@$PI_HOST" "sudo mkdir -p $PI_DIR && sudo chown -R $PI_USER:$PI_USER $PI_DIR && sudo mkdir -p $PI_DIR/logs && sudo chown $PI_USER:$PI_USER $PI_DIR/logs && sudo chmod 755 $PI_DIR/logs" || true
 echo "✅ Directories ready."
 
 # Sync files using rsync
