@@ -19,6 +19,10 @@ PI_HOST="${PI_HOST:-"raspberrypi.local"}"
 PI_USER="${PI_USER:-"user"}"
 PI_DIR="${PI_DIR:-"/opt/music-player"}"
 
+# Resolve local repository root directory where deploy.sh is located (inside scripts/)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+REPO_ROOT="$( dirname "$SCRIPT_DIR" )"
+
 # Help message
 show_help() {
   echo "Usage: ./scripts/deploy.sh [OPTIONS]"
@@ -127,7 +131,7 @@ rsync -avz --delete \
   --exclude="*.mp3" \
   --exclude="media/" \
   --exclude="logs/" \
-  ./ "$PI_USER@$PI_HOST:$PI_DIR/"
+  "$REPO_ROOT/" "$PI_USER@$PI_HOST:$PI_DIR/"
 
 echo "✅ Sync complete."
 
