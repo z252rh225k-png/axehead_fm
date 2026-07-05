@@ -441,14 +441,16 @@ class UpdateHandler:
     # ===== Staged Deployment Methods =====
 
     def _download_github_to_staging(self, repo_url: str, branch: str) -> str:
-        """Clone GitHub repo to staging and return path to clone directory."""
+        """Clone GitHub repo to a temporary work directory and return its path."""
         try:
-            # Clean up old staging
-            if self.staging_dir.exists():
-                shutil.rmtree(self.staging_dir)
-            self.staging_dir.mkdir(parents=True, exist_ok=True)
-            
-            temp_clone = self.staging_dir / "clone"
+            # Keep the Git clone outside the deployment staging tree so later staging
+            # cleanup does not delete the source directory we are about to validate.
+            clone_root = self.base_dir / "staging_source"
+            if clone_root.exists():
+                shutil.rmtree(clone_root)
+            clone_root.mkdir(parents=True, exist_ok=True)
+
+            temp_clone = clone_root / "clone"
             
             result = subprocess.run(
                 ["git", "clone", "--depth", "1", "--branch", branch, repo_url, str(temp_clone)],
@@ -559,6 +561,20 @@ class UpdateHandler:
         else:
             # Source is a directory (git clone)
             src = Path(zip_path)
+            if not src.exists():
+                raise Exception(f"Source directory not found: {zip_path}")
+
+            if self.staging_dir.exists():
+                for item in list(self.staging_dir.iterdir()):
+                    if item.resolve() == src.resolve():
+                        continue
+                    if item.is_dir():
+                        shutil.rmtree(item)
+                    else:
+                        item.unlink()
+            else:
+                self.staging_dir.mkdir(parents=True, exist_ok=True)
+
             for item in src.iterdir():
                 if item.name.startswith('.'):
                     continue  # Skip .git, .gitignore, etc.

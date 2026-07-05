@@ -17,7 +17,8 @@ dependencies = [
     "adafruit-circuitpython-pn532>=1.6.14",
     "Pillow>=9.0.0",
     "qrcode>=8.0.0",
-    "opencv-python-headless>=4.5.0"
+    "opencv-python-headless>=4.5.0",
+    "requests>=2.28.0"
 ]
 
 [project.scripts]

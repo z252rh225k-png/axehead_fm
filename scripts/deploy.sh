@@ -32,6 +32,9 @@ echo "📡 Syncing files to $PI_USER@$PI_HOST..."
 rsync -avz --delete \
   --exclude="venv/" \
   --exclude=".git/" \
+  --exclude="staging/" \
+  --exclude="backups/" \
+  --exclude="updates/" \
   --exclude="**/*.pyc" \
   --exclude="**/__pycache__/" \
   --exclude=".DS_Store" \
@@ -55,9 +58,12 @@ RESTART_SERVICE="$4"
 WEB_SETUP="$5"
 
 echo "-> Finalizing folder layout..."
-sudo mkdir -p "$PI_DIR/logs" /opt/music-player/media/{audio,video,images,thumbnails}
+sudo mkdir -p "$PI_DIR/logs" "$PI_DIR/staging" "$PI_DIR/backups" "$PI_DIR/updates" /opt/music-player/media/{audio,video,images,thumbnails}
 sudo chown -R "$PI_USER:$PI_USER" "$PI_DIR" /opt/music-player/media
 sudo chmod 755 "$PI_DIR/logs"
+sudo chmod 755 "$PI_DIR/staging" "$PI_DIR/backups" "$PI_DIR/updates"
+# Clear any stale clone directories from previous failed updates
+sudo rm -rf "$PI_DIR/staging/clone" "$PI_DIR/staging/extracted" "$PI_DIR/staging"/*
 
 # --- AUDIO & HARDWARE CONFIGURATION ---
 echo "-> Configuring Audio (USB Card 2) & Cleaning Hardware Overlays..."
@@ -105,7 +111,7 @@ if [ "$WEB_SETUP" = "true" ]; then
     python3 -m venv venv
   fi
   source venv/bin/activate
-  pip install Flask werkzeug pillow pydantic qrcode >/dev/null 2>&1
+  pip install Flask werkzeug pillow pydantic qrcode requests >/dev/null 2>&1
   
   if [ ! -f catalog.json ]; then
     echo '{}' > catalog.json
