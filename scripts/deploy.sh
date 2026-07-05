@@ -2,7 +2,7 @@
 # 🚀 Compact Deployer (deploy.sh)
 set -e
 
-PI_HOST="${PI_HOST:-"raspberrypidev.local"}"
+PI_HOST="${PI_HOST:-"raspberrypi.local"}"
 PI_USER="${PI_USER:-"user"}"
 PI_DIR="${PI_DIR:-"/opt/music-player"}"
 
@@ -85,7 +85,7 @@ sudo chown "$PI_USER:$PI_USER" /home/$PI_USER/.asoundrc
 if [ "$INSTALL_DEPS" = "true" ]; then
   echo "-> Installing system dependencies..."
   sudo apt-get update
-  sudo apt-get install -y python3-dev python3-venv build-essential libpulse0 pulseaudio-utils swig liblgpio-dev
+  sudo apt-get install -y git python3-dev python3-venv build-essential libpulse0 pulseaudio-utils swig liblgpio-dev
   sudo raspi-config nonint do_i2c 0 && sudo raspi-config nonint do_serial_cons 1 && sudo raspi-config nonint do_serial_hw 0
 
   echo "-> Building virtual environment & installing Python packages..."
