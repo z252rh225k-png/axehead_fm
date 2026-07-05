@@ -16,7 +16,14 @@ restart_service() {
         echo "ERROR: Failed to restart $SERVICE_NAME"
         return 1
     }
-    echo "✓ Service restart issued"
+
+    echo "Restarting music-web service..."
+    systemctl restart music-web || {
+        echo "ERROR: Failed to restart music-web"
+        return 1
+    }
+
+    echo "✓ Music services restart issued"
 }
 
 check_service_status() {

@@ -383,11 +383,11 @@ class UpdateHandler:
             job.phase = 'restart'
             job.progress_percent = 85
             self._update_job(job)
-            self._log_job(job, "Restarting music-player service...")
+            self._log_job(job, "Restarting music-player and music-web services...")
             
             try:
                 self._restart_service()
-                self._log_job(job, "Service restart triggered ✓")
+                self._log_job(job, "Music services restart triggered ✓")
             except Exception as e:
                 self._log_job(job, f"Service restart failed: {e}, rolling back...")
                 if backup_snap:

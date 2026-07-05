@@ -155,9 +155,9 @@ echo "-> Enabling services for startup..."
 sudo systemctl enable music-player.service music-splash.service
 
 if [ "$RESTART_SERVICE" = "true" ]; then
-  echo "-> Restarting music-player service..."
-  sudo systemctl restart music-player.service
-  echo "✅ Service restarted successfully."
+  echo "-> Restarting music-player and music-web services..."
+  sudo systemctl restart music-player.service music-web.service
+  echo "✅ Music services restarted successfully."
 fi
 
 # --- PRIVILEGE ESCALATION SETUP FOR UPDATES ---
@@ -174,7 +174,7 @@ else
 fi
 
 # Configure sudoers for web user to restart service without password
-SUDOERS_LINE="$PI_USER ALL=(ALL) NOPASSWD: /opt/music-player/scripts/music-player-restart.sh, /bin/systemctl restart music-player, /bin/systemctl status music-player"
+SUDOERS_LINE="$PI_USER ALL=(ALL) NOPASSWD: /opt/music-player/scripts/music-player-restart.sh, /bin/systemctl restart music-player, /bin/systemctl restart music-web, /bin/systemctl status music-player, /bin/systemctl status music-web"
 
 # Check if sudoers entry already exists
 if ! sudo grep -q "music-player-restart.sh" /etc/sudoers.d/music-player 2>/dev/null; then
