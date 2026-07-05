@@ -630,17 +630,70 @@ class UpdateHandler:
         if result.returncode != 0:
             raise Exception(f"pip upgrade failed: {result.stderr}")
         
-        # Install package in development mode
-        result = subprocess.run(
-            [str(pip_path), "install", "-e", "."],
-            capture_output=True,
-            text=True,
-            timeout=300,
-            cwd=str(self.staging_dir)
-        )
-        
-        if result.returncode != 0:
-            raise Exception(f"pip install -e . failed: {result.stderr}")
+        # Try normal editable install first. If it fails (commonly killed by OOM),
+        # retry with --no-build-isolation, and as a last resort create a temporary
+        # swap file and retry.
+        def _run_pip(cmd_args, timeout_s=300):
+            return subprocess.run(
+                [str(pip_path)] + cmd_args,
+                capture_output=True,
+                text=True,
+                timeout=timeout_s,
+                cwd=str(self.staging_dir)
+            )
+
+        result = _run_pip(["install", "-e", "."])
+        if result.returncode == 0:
+            return
+
+        # If the process was killed (e.g. exit -9) or stderr contains 'Killed',
+        # attempt a no-build-isolation install first.
+        killed = (result.returncode < 0) or ("killed" in (result.stderr or "").lower()) or ("exit code -9" in (result.stderr or ""))
+        self._log_job(job, f"pip install -e . failed (rc={result.returncode}). Trying fallback. stderr: {str(result.stderr)[:200]}")
+
+        # 1) Try without build isolation
+        result2 = _run_pip(["install", "--no-build-isolation", "-e", "."], timeout_s=600)
+        if result2.returncode == 0:
+            self._log_job(job, "pip install succeeded with --no-build-isolation")
+            return
+
+        self._log_job(job, f"--no-build-isolation attempt failed (rc={result2.returncode}). stderr: {str(result2.stderr)[:300]}")
+
+        # 2) If it looks like an OOM (killed) try to create a temporary 1GB swapfile
+        if killed:
+            swapfile = "/swapfile_music_update"
+            try:
+                self._log_job(job, "Attempting to create temporary swap (1GB) to work around OOM during build...")
+                # Try fallocate first, fallback to dd
+                try:
+                    subprocess.run(["sudo", "fallocate", "-l", "1G", swapfile], check=True, capture_output=True)
+                except Exception:
+                    subprocess.run(["sudo", "dd", "if=/dev/zero", f"of={swapfile}", "bs=1M", "count=1024"], check=True)
+
+                subprocess.run(["sudo", "chmod", "600", swapfile], check=True)
+                subprocess.run(["sudo", "mkswap", swapfile], check=True)
+                subprocess.run(["sudo", "swapon", swapfile], check=True)
+
+                # Retry original install (without --no-build-isolation) with more time
+                result3 = _run_pip(["install", "-e", "."], timeout_s=900)
+                if result3.returncode == 0:
+                    self._log_job(job, "pip install succeeded after enabling temporary swap")
+                    return
+                else:
+                    self._log_job(job, f"pip install still failed after swap (rc={result3.returncode}). stderr: {str(result3.stderr)[:400]}")
+            except Exception as e:
+                self._log_job(job, f"Temporary swap creation failed or pip retry failed: {e}")
+            finally:
+                # Attempt to remove swapfile if it exists
+                try:
+                    subprocess.run(["sudo", "swapoff", swapfile], check=False)
+                    subprocess.run(["sudo", "rm", "-f", swapfile], check=False)
+                    self._log_job(job, "Temporary swap removed (if it was created)")
+                except Exception:
+                    pass
+
+        # None of the fallbacks worked — raise with collected stderr for diagnosis
+        raise Exception(f"pip install -e . failed after fallbacks. initial rc={result.returncode}, no-isolation rc={result2.returncode}, killed={killed}. stderr: {str(result2.stderr)[:1000]}")
 
     def _atomic_swap(self) -> None:
         """Atomically swap staging to live (staging → app_dir)."""
