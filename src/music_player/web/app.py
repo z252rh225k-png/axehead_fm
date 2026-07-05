@@ -3,12 +3,13 @@ from pathlib import Path
 
 def create_app(config_path=None):
     """Flask application factory."""
-    # Resolve static folder to src/music_player/static
+    # Resolve static/template folders to src/music_player/ with absolute paths
     base_dir = Path(__file__).resolve().parent.parent
+    template_folder = str(base_dir / 'web' / 'templates')
     static_folder = str(base_dir / 'static')
 
     app = Flask(__name__,
-                template_folder='templates',
+                template_folder=template_folder,
                 static_folder=static_folder,
                 static_url_path='/static')
     

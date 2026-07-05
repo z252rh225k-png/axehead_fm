@@ -379,6 +379,23 @@ class UpdateHandler:
             self._atomic_swap()
             self._log_job(job, "Swap complete ✓ (live code updated)")
             
+            # Reinstall package into main venv to update .pth files
+            self._log_job(job, "Updating Python environment...")
+            try:
+                pip_path = self.venv_dir / "bin" / "pip"
+                result = subprocess.run(
+                    [str(pip_path), "install", "--quiet", "--upgrade", "--force-reinstall", "-e", str(self.app_dir)],
+                    capture_output=True,
+                    text=True,
+                    timeout=120
+                )
+                if result.returncode == 0:
+                    self._log_job(job, "Python environment updated ✓")
+                else:
+                    self._log_job(job, f"Warning: venv update had issues: {result.stderr[:200]}")
+            except Exception as e:
+                self._log_job(job, f"Note: venv update skipped (non-critical): {str(e)[:100]}")
+            
             # Phase 6: Restart service
             job.phase = 'restart'
             job.progress_percent = 85
@@ -633,6 +650,10 @@ class UpdateHandler:
         
         if self.app_dir.exists():
             shutil.rmtree(self.app_dir)
+        
+        # Clean any __pycache__ from staging to ensure fresh bytecode
+        for pycache_dir in self.staging_dir.glob('**/__pycache__'):
+            shutil.rmtree(pycache_dir)
         
         self.staging_dir.rename(self.app_dir)
 
