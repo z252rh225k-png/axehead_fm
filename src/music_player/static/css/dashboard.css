@@ -1,0 +1,23 @@
+/* Additional responsive styles */
+@media (max-width: 768px) {
+    .container { padding: 10px; }
+    header h1 { font-size: 18px; }
+    .card { padding: 15px; }
+    h2 { font-size: 16px; }
+    nav a { margin-right: 10px; font-size: 12px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    table { font-size: 12px; }
+    th, td { padding: 8px; }
+}
+
+@media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+    button { width: 100%; }
+    .media-item-actions { flex-direction: column; }
+}
+
+/* Drag and drop styling (for future enhancement) */
+.upload-area.drag-over {
+    border: 2px dashed #007bff;
+    background: #f0f7ff;
+}

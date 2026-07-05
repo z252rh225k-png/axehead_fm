@@ -1,5 +1,6 @@
 import pygame
 from music_player.state.config import VOLUME_DEFAULT
+from music_player.hardware.audio_device_manager import AudioDeviceManager
 
 class AudioEngine:
     def __init__(self):
@@ -14,6 +15,11 @@ class AudioEngine:
                 print("[+] Audio Engine fallback init successful.")
             except Exception as e2:
                 print(f"[-] Pygame mixer fallback init failed: {e2}")
+        
+        # Initialize audio device manager to handle headphone detection
+        self.device_manager = AudioDeviceManager()
+        self.device_manager.start_monitor()
+        print("[+] Audio Device Manager started (USB fallback enabled)")
         
         # Set initial volume
         pygame.mixer.music.set_volume(VOLUME_DEFAULT / 10.0)
@@ -31,6 +37,11 @@ class AudioEngine:
         pygame.mixer.music.set_volume(volume_scale)
 
     def quit(self):
+        try:
+            self.device_manager.stop_monitor()
+        except Exception as e:
+            print(f"[-] Error stopping device manager: {e}")
+        
         try:
             pygame.mixer.quit()
             pygame.quit()

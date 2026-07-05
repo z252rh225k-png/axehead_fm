@@ -11,33 +11,26 @@
     "audio": "/opt/music-player/media/audio/song2.mp3",
     "image": "/opt/music-player/media/images/image2.png"
   },
+  "song_03": {
+    "type": "audio",
+    "title": "Demo",
+    "audio": "/opt/music-player/media/audio/song3.mp3"
+  },
   "video_01": {
     "type": "video",
     "title": "Never Gonna Give You Up",
     "video": "/opt/music-player/media/video/nggyu.bin",
     "audio": "/opt/music-player/media/audio/nggyu.mp3"
   },
-  "nfc_token_03": {
-    "type": "slideshow",
-    "title": "Family Album",
-    "folder": "/opt/music-player/media/photos/",
-    "interval": 5.0,
-    "audio": "/opt/music-player/media/ambient_lofi.mp3"
-  },
-  "nfc_token_04": {
-    "type": "radio",
-    "title": "Synthwave FM",
-    "stream_url": "http://icecast.retro-synth.com/stream.mp3"
-  },
-  "nfc_token_05": {
-    "type": "game",
-    "title": "1-Bit Snake",
-    "game_class": "SnakeGame"
-  },
   "nfc_token_lyric": {
     "type": "radio",
     "title": "RTÉ Lyric FM",
     "stream_url": "https://www.rte.ie/manifests/lyric.m3u8",
     "station_freq": "96.7"
+  },
+  "qr_01": {
+    "type": "qr",
+    "title": "Axehead Web UI",
+    "text": "http://${hostname}:${port}/api/dashboard"
   }
 }

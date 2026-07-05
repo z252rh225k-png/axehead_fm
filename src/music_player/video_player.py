@@ -71,18 +71,20 @@ def play_preprocessed_bin(bin_path, display=None, check_tag_removed_fn=None, vol
     print(f"[+] Initializing OLED display...")
     if display is None:
         try:
-            serial_i2c = i2c(port=1, address=0x3C)
-            display = sh1106(serial_i2c)
+            from music_player.hardware.display import Display
+            display = Display()
         except Exception as e:
             print(f"[-] Failed to initialize display: {e}")
             return
 
+    # Determine if we have a Display wrapper or raw luma device
+    has_canvas_method = hasattr(display, 'canvas')
+    
     # Retro loading screen animation thread
     # Renders a rotating retro cassette tape reels graphic instantly in a background thread 
     # while the main thread performs the heavy library imports and file buffering.
     loading_active = True
     def play_loading_animation():
-        from luma.core.render import canvas
         import random
         frame_idx = 0
         
@@ -101,42 +103,52 @@ def play_preprocessed_bin(bin_path, display=None, check_tag_removed_fn=None, vol
         
         try:
             while loading_active:
-                with canvas(display) as draw:
-                    # 1. Title text
-                    draw.text((12, 2), "LOADING CASSETTE...", fill="white")
-                    draw.line((0, 14, 128, 14), fill="white")
-                    
-                    # 2. Outer cassette shell outline
-                    draw.rectangle((24, 20, 104, 52), outline="white")
-                    
-                    # 3. Spinning Reels
-                    left_reel_x, left_reel_y = 44, 36
-                    right_reel_x, right_reel_y = 84, 36
-                    reel_r = 7
-                    draw.ellipse((left_reel_x - reel_r, left_reel_y - reel_r, left_reel_x + reel_r, left_reel_y + reel_r), outline="white")
-                    draw.ellipse((right_reel_x - reel_r, right_reel_y - reel_r, right_reel_x + reel_r, right_reel_y + reel_r), outline="white")
-                    
-                    # Get precalculated spoke offsets
-                    spokes = spoke_patterns[frame_idx % len(spoke_patterns)]
-                    
-                    # Left Reel lines
-                    draw.line((left_reel_x + spokes[0][0], left_reel_y + spokes[0][1], left_reel_x + spokes[2][0], left_reel_y + spokes[2][1]), fill="white")
-                    draw.line((left_reel_x + spokes[1][0], left_reel_y + spokes[1][1], left_reel_x + spokes[3][0], left_reel_y + spokes[3][1]), fill="white")
-                    
-                    # Right Reel lines
-                    draw.line((right_reel_x + spokes[0][0], right_reel_y + spokes[0][1], right_reel_x + spokes[2][0], right_reel_y + spokes[2][1]), fill="white")
-                    draw.line((right_reel_x + spokes[1][0], right_reel_y + spokes[1][1], right_reel_x + spokes[3][0], right_reel_y + spokes[3][1]), fill="white")
-                    
-                    # 4. Moving CRT Static tuning bar at the very bottom
-                    for i in range(0, 128, 8):
-                        h = random.randint(0, 3)
-                        if h > 0:
-                            draw.line((i, 64 - h, i + random.randint(1, 4), 64 - h), fill="white")
-                            
+                if has_canvas_method:
+                    # Use Display wrapper's canvas method
+                    with display.canvas() as draw:
+                        draw_loading_frame(draw, frame_idx, spoke_patterns)
+                else:
+                    # Use luma canvas directly
+                    from luma.core.render import canvas
+                    with canvas(display) as draw:
+                        draw_loading_frame(draw, frame_idx, spoke_patterns)
                 frame_idx += 1
                 time.sleep(0.04) # ~25 FPS loader speed
         except Exception:
             pass # Keep silent if screen interrupts on shutdown/close
+
+    def draw_loading_frame(draw, frame_idx, spoke_patterns):
+        # 1. Title text
+        draw.text((12, 2), "LOADING CASSETTE...", fill="white")
+        draw.line((0, 14, 128, 14), fill="white")
+        
+        # 2. Outer cassette shell outline
+        draw.rectangle((24, 20, 104, 52), outline="white")
+        
+        # 3. Spinning Reels
+        left_reel_x, left_reel_y = 44, 36
+        right_reel_x, right_reel_y = 84, 36
+        reel_r = 7
+        draw.ellipse((left_reel_x - reel_r, left_reel_y - reel_r, left_reel_x + reel_r, left_reel_y + reel_r), outline="white")
+        draw.ellipse((right_reel_x - reel_r, right_reel_y - reel_r, right_reel_x + reel_r, right_reel_y + reel_r), outline="white")
+        
+        # Get precalculated spoke offsets
+        spokes = spoke_patterns[frame_idx % len(spoke_patterns)]
+        
+        # Left Reel lines
+        draw.line((left_reel_x + spokes[0][0], left_reel_y + spokes[0][1], left_reel_x + spokes[2][0], left_reel_y + spokes[2][1]), fill="white")
+        draw.line((left_reel_x + spokes[1][0], left_reel_y + spokes[1][1], left_reel_x + spokes[3][0], left_reel_y + spokes[3][1]), fill="white")
+        
+        # Right Reel lines
+        draw.line((right_reel_x + spokes[0][0], right_reel_y + spokes[0][1], right_reel_x + spokes[2][0], right_reel_y + spokes[2][1]), fill="white")
+        draw.line((right_reel_x + spokes[1][0], right_reel_y + spokes[1][1], right_reel_x + spokes[3][0], right_reel_y + spokes[3][1]), fill="white")
+        
+        # 4. Moving CRT Static tuning bar at the very bottom
+        import random
+        for i in range(0, 128, 8):
+            h = random.randint(0, 3)
+            if h > 0:
+                draw.line((i, 64 - h, i + random.randint(1, 4), 64 - h), fill="white")
 
     # Start retro load animation thread immediately
     import threading
@@ -322,7 +334,11 @@ def play_preprocessed_bin(bin_path, display=None, check_tag_removed_fn=None, vol
 
             # Measure Hardware I2C Render time
             render_start = time.time()
-            display.display(pil_img)
+            # Display video without inversion (video should always show original colors)
+            if hasattr(display, 'display'):
+                display.display(pil_img, invert=False)
+            else:
+                display.display(pil_img)
             render_time = time.time() - render_start
             frame_count += 1
 
@@ -394,8 +410,8 @@ def play_video(video_path):
 
     print(f"[+] Initializing OLED display...")
     try:
-        serial_i2c = i2c(port=1, address=0x3C)
-        display = sh1106(serial_i2c)
+        from music_player.hardware.display import Display
+        display = Display()
     except Exception as e:
         print(f"[-] Failed to initialize display: {e}")
         return
@@ -483,7 +499,11 @@ def play_video(video_path):
 
             # Measure Hardware I2C Render time
             render_start = time.time()
-            display.display(pil_img)
+            # Display video without inversion (video should always show original colors)
+            if hasattr(display, 'display'):
+                display.display(pil_img, invert=False)
+            else:
+                display.display(pil_img)
             render_time = time.time() - render_start
             frame_count += 1
 

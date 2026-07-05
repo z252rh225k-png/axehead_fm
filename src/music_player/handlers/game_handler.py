@@ -5,7 +5,7 @@ class GameHandler(BaseHandler):
     def play(self, assets, state, hardware_dict):
         print(f"Loading Game: {state.current_title}")
         
-        display = hardware_dict["display"].device
+        display = hardware_dict["display"]
         nfc_reader = hardware_dict["nfc_reader"]
         button_controller = hardware_dict["button_controller"]
 

@@ -33,6 +33,7 @@ sudo ./install.sh
 ```text
 axehead_fm/
 ├── catalog.json              # Media database associating NFC tokens with audio/video paths
+├── config.json               # User configuration file (screen inversion, default volumes, pins)
 ├── install.sh                # Automated system configuration and service installer
 ├── pyproject.toml            # Python package configurations & dependencies
 ├── nfc_diagnostics.py        # Independent tool for scanning NFC card raw byte block sectors
@@ -48,6 +49,35 @@ axehead_fm/
 │       └── image_test.py     # Independent display rendering test utility
 └── systemd/                  # Configuration files for music-player and music-splash services
 ```
+
+---
+
+## ⚙️ User Configuration (`config.json`)
+
+The application supports customization via a central `config.json` file. It resides either in the current working directory during local development, or at `/opt/music-player/config.json` once installed on the Raspberry Pi.
+
+You can modify options such as **screen inversion** (Light Mode vs. Dark Mode), default volumes, button pin mappings, and tuning behaviors:
+
+```json
+{
+  "invert_display": false,
+  "volume_default": 5,
+  "volume_max": 10,
+  "volume_min": 0,
+  "volume_overlay_duration": 2.0,
+  "radio_tuning_duration": 2.5,
+  "radio_default_freq": "96.7",
+  "nfc_serial_port": "/dev/serial0",
+  "nfc_baudrate": 115200,
+  "button_vol_up_pin": 17,
+  "button_vol_down_pin": 27,
+  "button_hold_time": 1.5
+}
+```
+
+### Light vs. Dark Mode (Screen Inversion)
+* Set `"invert_display": false` (default) for standard Dark Mode (white pixels on a black background).
+* Set `"invert_display": true` to swap black and white, activating **Light Mode** (black pixels on a white background). This applies to all UI menus, cassette animations, slideshows, and games. **Note**: Video playback is not inverted and will display in its original colors regardless of this setting.
 
 ---
 

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Axehead FM{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { background: #1a1a1a; color: white; padding: 20px 0; margin-bottom: 30px; }
+        header h1 { font-size: 24px; margin-bottom: 10px; }
+        header .status { font-size: 12px; color: #aaa; }
+        nav { margin-top: 15px; }
+        nav a { color: white; margin-right: 20px; text-decoration: none; font-size: 14px; }
+        nav a:hover { text-decoration: underline; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h2 { font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input[type="text"], input[type="file"], select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        .success { color: #28a745; padding: 10px; background: #d4edda; border-radius: 4px; margin-bottom: 15px; }
+        .error { color: #dc3545; padding: 10px; background: #f8d7da; border-radius: 4px; margin-bottom: 15px; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .media-item { background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; padding: 15px; }
+        .media-item h4 { font-size: 14px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .media-item p { font-size: 12px; color: #666; margin-bottom: 10px; }
+        .media-item-actions { display: flex; gap: 5px; }
+        .media-item-actions button { padding: 5px 10px; font-size: 12px; flex: 1; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f5f5f5; font-weight: 600; }
+        tr:hover { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🎵 Axehead FM Control Panel</h1>
+            <p class="status">Web Interface for Media Management</p>
+            <nav>
+                <a href="/api/dashboard">Dashboard</a>
+                <a href="/api/terminal">Terminal</a>
+                <a href="#upload">Upload</a>
+                <a href="#catalog">Catalog</a>
+                <a href="#media-list">Files</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

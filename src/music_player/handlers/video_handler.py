@@ -8,7 +8,7 @@ class VideoHandler(BaseHandler):
         audio_file = assets.get("audio") # Get audio file defined in catalog.json!
         print(f"Loading Video: {state.current_title} ({video_file}) -> audio: {audio_file}")
         
-        display = hardware_dict["display"].device
+        display = hardware_dict["display"]
         nfc_reader = hardware_dict["nfc_reader"]
         button_controller = hardware_dict["button_controller"]
 

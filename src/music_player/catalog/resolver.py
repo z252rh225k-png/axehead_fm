@@ -1,7 +1,26 @@
 import os
 import re
+import socket
 from PIL import Image
 from music_player.catalog.loader import load_catalog
+
+
+def _resolve_text_template(text):
+    """Expand simple template placeholders for dynamic QR and token content."""
+    if not text:
+        return text
+
+    hostname = socket.gethostname()
+    port = os.environ.get("AXEHEAD_PORT", "5000")
+    replacements = {
+        "${hostname}": hostname,
+        "${host}": hostname,
+        "${port}": port,
+    }
+    resolved = text
+    for placeholder, value in replacements.items():
+        resolved = resolved.replace(placeholder, value)
+    return resolved
 
 def extract_tag_payload(nfc_reader):
     """
@@ -63,6 +82,8 @@ def resolve_playback_assets(payload):
             except Exception as e:
                 print(f"[-] Failed to process artwork image {image_path}: {e}")
                 
+        if media_type == "qr":
+            entry["text"] = _resolve_text_template(entry.get("text", ""))
         entry["audio"] = audio_path
         entry["title"] = title
         entry["type"] = media_type

@@ -10,7 +10,6 @@ def run_snake_game(display, pn532, btn_left, btn_right, check_tag_removed_fn):
       - btn_right (Vol Down): Turn Right relative to current direction
     Exits if check_tag_removed_fn() returns True.
     """
-    from luma.core.render import canvas
 
     # Game dimensions
     GRID_WIDTH = 32
@@ -129,7 +128,7 @@ def run_snake_game(display, pn532, btn_left, btn_right, check_tag_removed_fn):
                             snake.pop()
 
             # Render frame
-            with canvas(display) as draw:
+            with display.canvas() as draw:
                 if game_over:
                     # Draw Game Over Screen
                     draw.rectangle((0, 0, 128, 64), fill="black")

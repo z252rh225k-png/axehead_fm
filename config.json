@@ -1,0 +1,14 @@
+{
+  "invert_display": false,
+  "volume_default": 5,
+  "volume_max": 10,
+  "volume_min": 0,
+  "volume_overlay_duration": 2.0,
+  "radio_tuning_duration": 2.5,
+  "radio_default_freq": "96.7",
+  "nfc_serial_port": "/dev/serial0",
+  "nfc_baudrate": 115200,
+  "button_vol_up_pin": 17,
+  "button_vol_down_pin": 27,
+  "button_hold_time": 1.5
+}

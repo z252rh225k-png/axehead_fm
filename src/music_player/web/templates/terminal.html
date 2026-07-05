@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>🖥️ Web Terminal</h2>
+    <p style="margin-bottom: 15px; color: #666;">Run a small set of safe shell commands for local debugging and inspection.</p>
+    <div id="terminalOutput" style="background:#111;color:#eee;padding:15px;border-radius:6px;font-family:monospace;white-space:pre-wrap;min-height:220px;max-height:400px;overflow:auto;">
+$ whoami
+pi
+</div>
+    <form id="terminalForm" style="margin-top: 15px;">
+        <div class="form-group">
+            <label for="terminalCommand">Command</label>
+            <input type="text" id="terminalCommand" name="command" placeholder="e.g. ls /opt/music-player" autocomplete="off">
+        </div>
+        <button type="submit">Run</button>
+    </form>
+    <div id="terminalMessage" style="margin-top:10px;"></div>
+</div>
+
+<script>
+const output = document.getElementById('terminalOutput');
+const form = document.getElementById('terminalForm');
+const message = document.getElementById('terminalMessage');
+
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const commandInput = document.getElementById('terminalCommand');
+    const command = commandInput.value.trim();
+    if (!command) return;
+    output.innerHTML += `\n$ ${command}`;
+    commandInput.value = '';
+    try {
+        const response = await fetch('/api/terminal/execute', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({command})
+        });
+        const data = await response.json();
+        if (response.ok) {
+            output.innerHTML += `\n${data.output || ''}`;
+        } else {
+            output.innerHTML += `\n[error] ${data.error || 'Unknown error'}`;
+            message.textContent = data.error || 'Command failed';
+        }
+    } catch (error) {
+        output.innerHTML += `\n[error] ${error.message}`;
+    }
+    output.scrollTop = output.scrollHeight;
+});
+</script>
+{% endblock %}

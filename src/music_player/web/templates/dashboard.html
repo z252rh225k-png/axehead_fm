@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Upload Section -->
+<div class="card" id="upload">
+    <h2>📤 Upload Media</h2>
+    
+    <div id="uploadMessage"></div>
+    
+    <form id="uploadForm">
+        <div class="form-group">
+            <label for="uploadType">Media Type:</label>
+            <select id="uploadType" name="type" required>
+                <option value="">-- Select Type --</option>
+                <option value="audio">Audio (MP3, WAV, FLAC, M4A)</option>
+                <option value="video">Video (MP4, MKV, AVI, BIN)</option>
+                <option value="image">Image (PNG, JPG, GIF)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="uploadFile">Choose File:</label>
+            <input type="file" id="uploadFile" name="file" required>
+            <small style="color: #666; margin-top: 5px; display: block;">Max 500MB</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="uploadTitle">Title (optional):</label>
+            <input type="text" id="uploadTitle" name="title" placeholder="e.g., My Awesome Song">
+        </div>
+        
+        <button type="submit">Upload</button>
+        <div id="uploadProgress" style="margin-top: 10px;"></div>
+    </form>
+</div>
+
+<!-- Media List Section -->
+<div class="card" id="media-list">
+    <h2>📁 Media Files</h2>
+    
+    <div id="mediaListContent">
+        <div class="loading"></div> Loading...
+    </div>
+</div>
+
+<!-- Saved Wi-Fi Connections -->
+<div class="card" id="wifi">
+    <h2>📶 Saved Wi-Fi Connections</h2>
+    <div id="wifiMessage"></div>
+    <div id="wifiConnectionsContent">
+        <div class="loading"></div> Loading connections...
+    </div>
+</div>
+
+<!-- Update Section -->
+<div class="card" id="updates">
+    <h2>⬆️ Apply Update Package</h2>
+    <div id="updateMessage"></div>
+    <form id="githubUpdateForm">
+        <div class="form-group">
+            <label for="githubRepo">GitHub Repo URL:</label>
+            <input type="text" id="githubRepo" name="repo" placeholder="https://github.com/owner/repo.git">
+        </div>
+        <div class="form-group">
+            <label for="githubBranch">Branch:</label>
+            <input type="text" id="githubBranch" name="branch" value="main">
+        </div>
+        <button type="submit">Pull from GitHub</button>
+    </form>
+    <hr style="margin: 20px 0;">
+    <form id="updateForm">
+        <div class="form-group">
+            <label for="updateFile">Choose ZIP package:</label>
+            <input type="file" id="updateFile" name="file" accept=".zip" required>
+        </div>
+        <button type="submit">Apply Update</button>
+    </form>
+</div>
+
+<!-- Catalog Section -->
+<div class="card" id="catalog">
+    <h2>📑 Media Catalog</h2>
+    
+    <div id="catalogMessage"></div>
+    <div id="catalogContent">
+        <div class="loading"></div> Loading catalog...
+    </div>
+</div>
+
+<script>
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    loadCatalog();
+    loadMediaList();
+    loadWifiConnections();
+    setupUploadHandler();
+    setupUpdateHandler();
+    setupGitHubUpdateHandler();
+    loadUpdateSettings();
+});
+
+function setupUploadHandler() {
+    const form = document.getElementById('uploadForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('uploadFile');
+        const typeSelect = document.getElementById('uploadType');
+        const titleInput = document.getElementById('uploadTitle');
+        const messageDiv = document.getElementById('uploadMessage');
+        
+        if (!fileInput.files.length) {
+            showMessage(messageDiv, 'Please select a file', 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('type', typeSelect.value);
+        if (titleInput.value) {
+            formData.append('title', titleInput.value);
+        }
+        
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showMessage(messageDiv, `✅ Uploaded: ${data.entry_id}`, 'success');
+                form.reset();
+                loadCatalog();
+                loadMediaList();
+            } else {
+                showMessage(messageDiv, `❌ ${data.error}`, 'error');
+            }
+        } catch (error) {
+            showMessage(messageDiv, `Error: ${error.message}`, 'error');
+        }
+    });
+}
+
+function setupGitHubUpdateHandler() {
+    const form = document.getElementById('githubUpdateForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const repoInput = document.getElementById('githubRepo');
+        const branchInput = document.getElementById('githubBranch');
+        const messageDiv = document.getElementById('updateMessage');
+        try {
+            const response = await fetch('/api/update/github', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({repo: repoInput.value, branch: branchInput.value})
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showMessage(messageDiv, `✅ ${data.message}`, 'success');
+            } else {
+                showMessage(messageDiv, `❌ ${data.error}`, 'error');
+            }
+        } catch (error) {
+            showMessage(messageDiv, `Error: ${error.message}`, 'error');
+        }
+    });
+}
+
+function setupUpdateHandler() {
+    const form = document.getElementById('updateForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('updateFile');
+        const messageDiv = document.getElementById('updateMessage');
+        if (!fileInput.files.length) {
+            showMessage(messageDiv, 'Please select a ZIP package', 'error');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        try {
+            const response = await fetch('/api/update/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showMessage(messageDiv, `✅ ${data.message}`, 'success');
+            } else {
+                showMessage(messageDiv, `❌ ${data.error}`, 'error');
+            }
+        } catch (error) {
+            showMessage(messageDiv, `Error: ${error.message}`, 'error');
+        }
+    });
+}
+
+async function loadUpdateSettings() {
+    try {
+        const response = await fetch('/api/updates');
+        const data = await response.json();
+        document.getElementById('githubRepo').value = data.repo || '';
+        document.getElementById('githubBranch').value = data.branch || 'main';
+    } catch (error) {
+        console.error('Could not load update settings', error);
+    }
+}
+
+async function loadCatalog() {
+    try {
+        const response = await fetch('/api/catalog');
+        const catalog = await response.json();
+        
+        const content = document.getElementById('catalogContent');
+        
+        if (Object.keys(catalog).length === 0) {
+            content.innerHTML = '<p style="color: #999;">No entries in catalog</p>';
+            return;
+        }
+        
+        let html = '<table><thead><tr><th>ID</th><th>Type</th><th>Title</th><th>Actions</th></tr></thead><tbody>';
+        
+        for (const [id, entry] of Object.entries(catalog)) {
+            html += `
+                <tr>
+                    <td><code>${id}</code></td>
+                    <td>${entry.type}</td>
+                    <td>${entry.title || 'Untitled'}</td>
+                    <td>
+                        <button onclick="editEntry('${id}')" style="background: #17a2b8;">Edit</button>
+                        <button onclick="deleteEntry('${id}')" class="danger" style="width: 70px;">Delete</button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        html += '</tbody></table>';
+        content.innerHTML = html;
+    } catch (error) {
+        document.getElementById('catalogContent').innerHTML = `<p style="color: #dc3545;">Error loading catalog: ${error.message}</p>`;
+    }
+}
+
+async function loadMediaList() {
+    try {
+        const response = await fetch('/api/media-list');
+        const media = await response.json();
+        
+        const content = document.getElementById('mediaListContent');
+        let html = '';
+        
+        for (const [type, files] of Object.entries(media)) {
+            if (files.length === 0) continue;
+            
+            html += `<h3>${type.toUpperCase()} (${files.length})</h3><div class="grid">`;
+            
+            for (const file of files) {
+                html += `
+                    <div class="media-item">
+                        <h4>${file.name}</h4>
+                        <p>${file.size}</p>
+                        <p style="font-size: 11px; color: #999;">${new Date(file.modified).toLocaleDateString()}</p>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+        }
+        
+        if (!html) {
+            html = '<p style="color: #999;">No files uploaded yet</p>';
+        }
+        
+        content.innerHTML = html;
+    } catch (error) {
+        document.getElementById('mediaListContent').innerHTML = `<p style="color: #dc3545;">Error: ${error.message}</p>`;
+    }
+}
+
+async function loadWifiConnections() {
+    try {
+        const response = await fetch('/api/wifi/connections');
+        const data = await response.json();
+        const content = document.getElementById('wifiConnectionsContent');
+
+        if (!response.ok || !data.connections || data.connections.length === 0) {
+            content.innerHTML = '<p style="color: #999;">No saved Wi-Fi connections found</p>';
+            return;
+        }
+
+        let html = '<table><thead><tr><th>Name</th><th>Status</th><th>Device</th><th>Actions</th></tr></thead><tbody>';
+        for (const connection of data.connections) {
+            const activeLabel = connection.active ? 'Active' : 'Saved';
+            html += `
+                <tr>
+                    <td>${connection.name}</td>
+                    <td>${activeLabel}</td>
+                    <td>${connection.device || '—'}</td>
+                    <td>
+                        <button onclick="connectWifiConnection('${connection.name}')" style="background: #28a745; margin-right: 6px;">Connect</button>
+                        <button onclick="forgetWifiConnection('${connection.name}')" class="danger">Forget</button>
+                    </td>
+                </tr>
+            `;
+        }
+        html += '</tbody></table>';
+        content.innerHTML = html;
+    } catch (error) {
+        document.getElementById('wifiConnectionsContent').innerHTML = `<p style="color: #dc3545;">Error loading Wi-Fi connections: ${error.message}</p>`;
+    }
+}
+
+async function connectWifiConnection(connectionName) {
+    try {
+        const response = await fetch(`/api/wifi/connections/${encodeURIComponent(connectionName)}/connect`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showMessage(document.getElementById('wifiMessage'), `✅ ${data.message}`, 'success');
+            loadWifiConnections();
+        } else {
+            showMessage(document.getElementById('wifiMessage'), `❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showMessage(document.getElementById('wifiMessage'), `Error: ${error.message}`, 'error');
+    }
+}
+
+async function forgetWifiConnection(connectionName) {
+    if (!confirm(`Forget saved connection "${connectionName}"?`)) return;
+
+    try {
+        const response = await fetch(`/api/wifi/connections/${encodeURIComponent(connectionName)}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showMessage(document.getElementById('wifiMessage'), `✅ ${data.message}`, 'success');
+            loadWifiConnections();
+        } else {
+            showMessage(document.getElementById('wifiMessage'), `❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showMessage(document.getElementById('wifiMessage'), `Error: ${error.message}`, 'error');
+    }
+}
+
+async function deleteEntry(entryId) {
+    if (!confirm(`Delete "${entryId}" and associated files?`)) return;
+    
+    try {
+        const response = await fetch(`/api/catalog/${entryId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage(document.getElementById('catalogMessage'), '✅ Deleted', 'success');
+            loadCatalog();
+            loadMediaList();
+        } else {
+            showMessage(document.getElementById('catalogMessage'), `❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showMessage(document.getElementById('catalogMessage'), `Error: ${error.message}`, 'error');
+    }
+}
+
+function editEntry(entryId) {
+    alert('Edit functionality coming in Phase 2');
+}
+
+function showMessage(element, text, type) {
+    element.className = type;
+    element.textContent = text;
+    element.style.display = 'block';
+    if (type === 'success') {
+        setTimeout(() => { element.style.display = 'none'; }, 4000);
+    }
+}
+</script>
+
+{% endblock %}

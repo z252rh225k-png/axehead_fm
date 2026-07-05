@@ -2,11 +2,12 @@ import time
 import sys
 import threading
 import signal
-from music_player.hardware.nfc_reader import NFCReader
+from music_player.hardware.nfc_reader import NFCReader, is_wifi_tag, parse_wifi_ndef
 from music_player.hardware.display import Display
 from music_player.hardware.audio_engine import AudioEngine
 from music_player.hardware.button_controller import ButtonController
 from music_player.bluetooth_manager import BluetoothManager
+from music_player.hardware.network_manager import get_network_manager
 from music_player.state.player_state import PlayerState
 from music_player.catalog.resolver import extract_tag_payload, resolve_playback_assets
 from music_player.ui.renderer import UIRenderer
@@ -17,6 +18,7 @@ from music_player.handlers.video_handler import VideoHandler
 from music_player.handlers.radio_handler import RadioHandler
 from music_player.handlers.slideshow_handler import SlideshowHandler
 from music_player.handlers.game_handler import GameHandler
+from music_player.handlers.qr_handler import QRHandler
 
 class MusicPlayer:
     def __init__(self):
@@ -42,6 +44,7 @@ class MusicPlayer:
             vol_down_callback=self.volume_down
         )
         self.hardware_dict["button_controller"] = self.button_controller
+        self.network_manager = get_network_manager()
 
         # 3. Handlers
         self.handlers = {
@@ -49,7 +52,8 @@ class MusicPlayer:
             "video": VideoHandler(),
             "radio": RadioHandler(),
             "slideshow": SlideshowHandler(),
-            "game": GameHandler()
+            "game": GameHandler(),
+            "qr": QRHandler()
         }
         self.current_active_handler = None
 
@@ -173,6 +177,23 @@ class MusicPlayer:
                                 self.current_active_handler = None
                             
                             payload = extract_tag_payload(self.nfc_reader)
+                            wifi_payload = self.nfc_reader.read_wifi_payload(timeout=0.05) if hasattr(self.nfc_reader, "read_wifi_payload") else None
+                            if wifi_payload and is_wifi_tag(self.state.current_uid, wifi_payload):
+                                credentials = parse_wifi_ndef(wifi_payload)
+                                if credentials:
+                                    success, message = self.network_manager.connect_wifi(
+                                        credentials.get("ssid", ""),
+                                        credentials.get("password", ""),
+                                        credentials.get("security", "WPA2"),
+                                    )
+                                    print(f"Wi-Fi provisioning result: {message}")
+                                    self.state.current_title = "WiFi Setup"
+                                    self.state.current_media_type = "wifi"
+                                    self.state.current_playing = False
+                                    self.state.current_artwork_img = None
+                                    self.state.menu_message = message
+                                    self.state.menu_message_timeout = time.time() + 4.0
+                                payload = None
                             print(f"Decoded Tag Payload: {payload}")
                             
                             assets = resolve_playback_assets(payload) if payload else None
@@ -234,6 +255,19 @@ class MusicPlayer:
 
 def main():
     player = MusicPlayer()
+    # Start web UI in background thread (Phase 1)
+    try:
+        from music_player.web.app import create_app
+        app = create_app()
+        web_thread = threading.Thread(
+            target=lambda: app.run(host='0.0.0.0', port=5000, debug=False),
+            daemon=True
+        )
+        web_thread.start()
+        print('[+] Web UI thread started on port 5000')
+    except Exception as e:
+        print(f'[!] Web UI not started: {e}')
+
     player.run()
 
 if __name__ == "__main__":

@@ -1,22 +1,25 @@
 [Unit]
 Description=Analog Music Player Service
-After=sound.target network.target pipewire.service
+After=sound.target network.target
 Requires=sound.target
 
 [Service]
 Type=simple
 User=pi
 WorkingDirectory=/opt/music-player
-ExecStart=/opt/music-player/venv/bin/python3 -u /opt/music-player/venv/bin/music-player
+ExecStart=/opt/music-player/venv/bin/music-player
 StandardOutput=append:/opt/music-player/logs/music-player.log
 StandardError=append:/opt/music-player/logs/music-player.log
+
 Environment=PYTHONUNBUFFERED=1
-# Environment variables to force Pygame/SDL to route through PipeWire / PulseAudio
-Environment=SDL_AUDIODRIVER=pulse
-Environment=PULSE_RUNTIME_PATH=/run/user/1000/pulse/
+
+# 💡 CHANGE TO THIS: Force Pygame to talk straight to the ALSA hardware layer
+Environment=SDL_AUDIODRIVER=alsa
+
 Restart=always
 RestartSec=5
-# Grants permission to the audio card, GPIO, and serial UART without running as root
+
+# This group list gives the service direct access to the soundcard hardware channels
 SupplementaryGroups=audio gpio i2c dialout
 
 [Install]

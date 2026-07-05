@@ -1,5 +1,4 @@
 import time
-from luma.core.render import canvas
 from music_player.ui.screens import (
     MusicScreen, VolumeScreen, PowerScreen, WaitingScreen, BTMenuScreen
 )
@@ -15,8 +14,11 @@ class UIRenderer:
         }
 
     def render(self, display, state, bt_manager):
+        if state.current_media_type == "qr" and getattr(state, "current_playing", False):
+            return
+
         # Decide which screen to draw
-        with canvas(display.device) as draw:
+        with display.canvas() as draw:
             # 1. Power/Shutdown Screen
             if state.is_shutting_down:
                 self.screens["power"].draw(draw, state, bt_manager)
