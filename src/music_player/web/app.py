@@ -26,9 +26,23 @@ def create_app(config_path=None):
     for subdir in ['audio', 'images', 'video', 'thumbnails']:
         (app.config['MEDIA_BASE'] / subdir).mkdir(parents=True, exist_ok=True)
     
+    # Initialize update handler and start worker thread
+    from music_player.web.update_handler import UpdateHandler
+    update_handler = UpdateHandler(app.config['UPDATE_ROOT'])
+    update_handler.start_worker()
+    
+    # Store reference for shutdown
+    app.update_handler = update_handler
+    
     # Register blueprints
     from music_player.web.routes import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
+    
+    # Cleanup on shutdown
+    @app.teardown_appcontext
+    def shutdown_update_worker(exception=None):
+        if hasattr(app, 'update_handler'):
+            app.update_handler.stop_worker()
     
     # Error handlers
     @app.errorhandler(400)

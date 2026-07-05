@@ -4,14 +4,95 @@
 
 Deploy new versions of Axehead FM directly from GitHub releases via web interface. Includes rollback capability, version history tracking, and automatic service restart.
 
-### Current implementation status (2026-07-04)
-- Added a configurable GitHub update path that accepts a repository URL and branch.
-- Added ZIP-upload fallback support for manual package deployment.
-- Remaining work: stronger rollback/history tracking and more explicit release validation.
+### Current implementation status (2026-07-05)
+- ✅ Basic GitHub update trigger exists (POST /api/update/github)
+- ✅ ZIP upload fallback for manual updates exists
+- ⚠️ **In Progress**: Async job engine, progress tracking, and privileged restart flow
+- ⏳ Remaining: Rollback safety, release validation, privilege escalation, health checks
 
-**Time Estimate**: 2-3 days
-**Dependencies**: Flask (Phase 1), GitHub CLI (optional), requests library
+**Time Estimate**: 2-3 days total; Milestone A starts now (1 day)
+**Dependencies**: Flask (Phase 1), requests library, subprocess (stdlib)
 **Prerequisites**: Phase 1 complete, WiFi connectivity (Phase 2)
+
+---
+
+## Implementation Checklist
+
+### Milestone A: Update State Model & Async Job API (1 day)
+
+**Backend**:
+- [ ] Create `UpdateJob` dataclass in update_handler.py (job_id, status, phase, progress, logs)
+- [ ] Add job persistence to `/opt/music-player/updates/jobs.json`
+- [ ] Extend UpdateHandler with enqueue_update() and get_job_status()
+- [ ] Add async job endpoints to routes.py:
+  - [ ] `POST /api/update/start` → returns job_id + immediate response
+  - [ ] `GET /api/update/job/<job_id>` → returns phase, progress_percent, logs
+  - [ ] `GET /api/update/history` → returns list of past jobs
+  - [ ] `GET /api/update/version` → returns installed version
+- [ ] Ensure web app initializes job processor thread on startup
+
+**Frontend**:
+- [ ] Update dashboard update card to show version + upstream version
+- [ ] Add Start Update button with confirmation dialog
+- [ ] Implement status polling loop (5-sec interval) when job is active
+- [ ] Show progress bar with phase name + log tail
+- [ ] Show "Reconnecting..." notice during service restart phase
+- [ ] Display history table with timestamp, status, version
+
+### Milestone B: Staged Deploy Engine & Atomic Update (1-2 days)
+
+**Backend**:
+- [ ] Refactor apply_update to use staging directory tree
+- [ ] Add safe download + extract (validate paths, deny traversal)
+- [ ] Create versioned backup snapshots with timestamp
+- [ ] Implement atomic swap (stage → live) via symlink/mv
+- [ ] Run pip install -e . in staging venv before swap
+- [ ] Add disk space check before staging
+- [ ] Write job phase log after each step
+
+**Testing**:
+- [ ] Unit test: invalid zip paths rejected
+- [ ] Unit test: disk space check works
+- [ ] Unit test: backup snapshot created
+- [ ] Integration test: happy path (download + deploy + restart)
+
+### Milestone C: Privileged Restart & Health Checks (1 day)
+
+**Backend**:
+- [ ] Create systemd-run wrapper or sudoers helper script for:
+  - [ ] `systemctl restart music-player`
+  - [ ] `systemctl restart music-web` (if separate)
+  - [ ] Status check script (curl health endpoint)
+- [ ] Extend job phases: download → validate → backup → deploy → install → restart → health-check → done
+- [ ] Add automatic rollback on health check failure
+- [ ] Set job status to 'needs_manual_review' if rollback fails
+
+**Deployment**:
+- [ ] Update install.sh to set sudoers for web user to call systemctl restart + status
+- [ ] Update deploy.sh to configure music-web systemd service
+
+### Milestone D: Security, Tests & Runbook (1 day)
+
+**Backend**:
+- [ ] Add CSRF protection to update endpoints (hidden token in form)
+- [ ] Add session-based auth (login required for updates)
+- [ ] Enforce repo URL allowlist (config.json: allowed_github_repos)
+- [ ] Enforce branch allowlist (config.json: allowed_branches)
+- [ ] Add timeout (15min per update, auto-fail)
+- [ ] Prevent concurrent updates (mutex flag in job state)
+
+**Testing**:
+- [ ] Unit tests for state transitions
+- [ ] Integration: valid update → deployed → service running
+- [ ] Integration: network drop mid-download → resume or cancel
+- [ ] Integration: pip install fails → auto-rollback
+- [ ] Pi runbook: test matrix (5 scenarios)
+
+**Documentation**:
+- [ ] Update README.md with "Update on Device" section
+- [ ] Write admin troubleshooting guide (job logs location, manual recovery)
+
+---
 
 ---
 

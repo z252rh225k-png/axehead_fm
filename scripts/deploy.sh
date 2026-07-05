@@ -153,6 +153,29 @@ if [ "$RESTART_SERVICE" = "true" ]; then
   sudo systemctl restart music-player.service
   echo "✅ Service restarted successfully."
 fi
+
+# --- PRIVILEGE ESCALATION SETUP FOR UPDATES ---
+echo "-> Setting up privileged update helper..."
+
+# Copy restart helper script
+mkdir -p "$PI_DIR/scripts"
+cp -f "$PI_DIR/scripts/music-player-restart.sh" "$PI_DIR/scripts/music-player-restart.sh"
+chmod +x "$PI_DIR/scripts/music-player-restart.sh"
+echo "✓ Restart helper copied and executable"
+
+# Configure sudoers for web user to restart service without password
+SUDOERS_LINE="$PI_USER ALL=(ALL) NOPASSWD: /opt/music-player/scripts/music-player-restart.sh, /bin/systemctl restart music-player, /bin/systemctl status music-player"
+
+# Check if sudoers entry already exists
+if ! sudo grep -q "music-player-restart.sh" /etc/sudoers.d/music-player 2>/dev/null; then
+  echo "$SUDOERS_LINE" | sudo tee /etc/sudoers.d/music-player > /dev/null
+  sudo chmod 440 /etc/sudoers.d/music-player
+  echo "✓ Sudoers configured for $PI_USER"
+else
+  echo "✓ Sudoers already configured"
+fi
+
+echo "-> Update privileges configured"
 EOF
 
 echo "🚀 Deployment finished!"

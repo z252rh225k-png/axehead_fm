@@ -55,27 +55,83 @@
 
 <!-- Update Section -->
 <div class="card" id="updates">
-    <h2>⬆️ Apply Update Package</h2>
+    <h2>⬆️ System Updates</h2>
     <div id="updateMessage"></div>
-    <form id="githubUpdateForm">
-        <div class="form-group">
-            <label for="githubRepo">GitHub Repo URL:</label>
-            <input type="text" id="githubRepo" name="repo" placeholder="https://github.com/owner/repo.git">
+    
+    <!-- Current Version Status -->
+    <div style="background: #f5f5f5; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; font-size: 14px;">🔍 Current Installation</h3>
+        <p style="margin: 8px 0; font-size: 13px;">
+            <strong>Version:</strong> <span id="currentVersion">Loading...</span>
+        </p>
+    </div>
+    
+    <!-- GitHub Update Trigger -->
+    <div style="margin-bottom: 20px;">
+        <h3 style="font-size: 14px; margin-bottom: 10px;">📥 Pull from GitHub</h3>
+        <form id="githubUpdateForm" onsubmit="return startGitHubUpdate(event)">
+            <div class="form-group">
+                <label for="githubRepo">Repository URL:</label>
+                <input type="text" id="githubRepo" name="repo" placeholder="https://github.com/owner/repo.git" required>
+            </div>
+            <div class="form-group">
+                <label for="githubBranch">Branch:</label>
+                <input type="text" id="githubBranch" name="branch" value="main">
+            </div>
+            <button type="submit" id="startUpdateBtn" style="width: 100%;">Start Update</button>
+        </form>
+    </div>
+    
+    <!-- ZIP Upload Update Trigger -->
+    <div style="margin-bottom: 20px;">
+        <h3 style="font-size: 14px; margin-bottom: 10px;">📦 Upload ZIP Package</h3>
+        <form id="zipUpdateForm" onsubmit="return startZipUpdate(event)">
+            <div class="form-group">
+                <label for="updateFile">ZIP File:</label>
+                <input type="file" id="updateFile" name="file" accept=".zip" required>
+            </div>
+            <button type="submit" style="width: 100%;">Install from ZIP</button>
+        </form>
+    </div>
+    
+    <!-- Update Status Display (shown when update is in progress) -->
+    <div id="updateStatusPanel" style="display: none; margin-bottom: 20px;">
+        <h3 style="font-size: 14px; margin-bottom: 10px;">📊 Update In Progress</h3>
+        <div style="background: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ffc107; margin-bottom: 12px;">
+            <p style="margin: 0; font-size: 13px; color: #856404;">
+                🔄 <strong id="updatePhase">Preparing...</strong>
+                <span id="updatePercent" style="float: right; font-weight: bold;">0%</span>
+            </p>
+            <p id="updatePhaseDescription" style="margin: 5px 0 0 0; font-size: 11px; color: #856404;"></p>
         </div>
-        <div class="form-group">
-            <label for="githubBranch">Branch:</label>
-            <input type="text" id="githubBranch" name="branch" value="main">
+        
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 12px; border: 1px solid #dee2e6;">
+            <div style="background: #e9e9e9; height: 20px; border-radius: 3px; overflow: hidden;">
+                <div id="progressBar" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
         </div>
-        <button type="submit">Pull from GitHub</button>
-    </form>
-    <hr style="margin: 20px 0;">
-    <form id="updateForm">
-        <div class="form-group">
-            <label for="updateFile">Choose ZIP package:</label>
-            <input type="file" id="updateFile" name="file" accept=".zip" required>
+        
+        <div id="updateLogs" style="background: #f0f0f0; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 11px; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; color: #333;">
+            <p style="margin: 0;">Logs will appear here...</p>
         </div>
-        <button type="submit">Apply Update</button>
-    </form>
+    </div>
+    
+    <!-- Update History -->
+    <div style="margin-top: 20px;">
+        <h3 style="font-size: 14px; margin-bottom: 10px;">📜 Update History</h3>
+        <div id="updateHistory" style="font-size: 12px;">
+            <p style="color: #999;">Loading...</p>
+        </div>
+    </div>
+    
+    <!-- Backup & Rollback Section -->
+    <div id="rollbackSection" style="margin-top: 20px; display: none;">
+        <h3 style="font-size: 14px; margin-bottom: 10px;">⏮️ Rollback (Restore from Backup)</h3>
+        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">If the latest update has issues, you can restore from a previous backup:</p>
+        <div id="backupsList" style="font-size: 12px;">
+            <p style="color: #999;">Loading backups...</p>
+        </div>
+    </div>
 </div>
 
 <!-- Catalog Section -->
@@ -94,6 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCatalog();
     loadMediaList();
     loadWifiConnections();
+    loadCurrentVersion();
+    loadUpdateHistory();
+    loadBackups();
     setupUploadHandler();
     setupUpdateHandler();
     setupGitHubUpdateHandler();
@@ -144,41 +203,16 @@ function setupUploadHandler() {
     });
 }
 
-function setupGitHubUpdateHandler() {
-    const form = document.getElementById('githubUpdateForm');
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const repoInput = document.getElementById('githubRepo');
-        const branchInput = document.getElementById('githubBranch');
-        const messageDiv = document.getElementById('updateMessage');
-        try {
-            const response = await fetch('/api/update/github', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({repo: repoInput.value, branch: branchInput.value})
-            });
-            const data = await response.json();
-            if (response.ok) {
-                showMessage(messageDiv, `✅ ${data.message}`, 'success');
-            } else {
-                showMessage(messageDiv, `❌ ${data.error}`, 'error');
-            }
-        } catch (error) {
-            showMessage(messageDiv, `Error: ${error.message}`, 'error');
-        }
-    });
-}
-
 function setupUpdateHandler() {
-    const form = document.getElementById('updateForm');
+    const form = document.getElementById('zipUpdateForm');
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const fileInput = document.getElementById('updateFile');
-        const messageDiv = document.getElementById('updateMessage');
         if (!fileInput.files.length) {
-            showMessage(messageDiv, 'Please select a ZIP package', 'error');
+            showMessage(document.getElementById('updateMessage'), 'Please select a ZIP file', 'error');
             return;
         }
+        // Upload ZIP first, then start update
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
         try {
@@ -188,14 +222,307 @@ function setupUpdateHandler() {
             });
             const data = await response.json();
             if (response.ok) {
-                showMessage(messageDiv, `✅ ${data.message}`, 'success');
+                // Now start the update from the uploaded file
+                await startUpdateJob('zip', data.package);
+                form.reset();
             } else {
-                showMessage(messageDiv, `❌ ${data.error}`, 'error');
+                showMessage(document.getElementById('updateMessage'), `Upload failed: ${data.error}`, 'error');
             }
         } catch (error) {
-            showMessage(messageDiv, `Error: ${error.message}`, 'error');
+            showMessage(document.getElementById('updateMessage'), `Error: ${error.message}`, 'error');
         }
     });
+}
+
+function startGitHubUpdate(e) {
+    e.preventDefault();
+    const repoInput = document.getElementById('githubRepo');
+    const branchInput = document.getElementById('githubBranch');
+    
+    if (!repoInput.value.trim()) {
+        showMessage(document.getElementById('updateMessage'), 'Repository URL is required', 'error');
+        return false;
+    }
+    
+    startUpdateJob('github', null, repoInput.value, branchInput.value);
+    return false;
+}
+
+function startZipUpdate(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('updateFile');
+    if (!fileInput.files.length) {
+        showMessage(document.getElementById('updateMessage'), 'Please select a ZIP file', 'error');
+        return false;
+    }
+    
+    // Upload ZIP first
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    fetch('/api/update/upload', {
+        method: 'POST',
+        body: formData
+    }).then(response => response.json()).then(data => {
+        if (data.package) {
+            startUpdateJob('zip', data.package);
+        } else {
+            showMessage(document.getElementById('updateMessage'), `Upload error: ${data.error}`, 'error');
+        }
+    }).catch(error => {
+        showMessage(document.getElementById('updateMessage'), `Error: ${error.message}`, 'error');
+    });
+    
+    return false;
+}
+
+async function startUpdateJob(source, zipPath = null, repo = null, branch = null) {
+    const payload = { source };
+    if (zipPath) payload.zip_path = zipPath;
+    if (repo) payload.repo = repo;
+    if (branch) payload.branch = branch;
+    
+    try {
+        const response = await fetch('/api/update/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        if (response.ok || response.status === 202) {
+            const jobId = data.job_id;
+            showMessage(document.getElementById('updateMessage'), '✅ Update started', 'success');
+            // Start polling for job status
+            pollUpdateJob(jobId);
+        } else {
+            showMessage(document.getElementById('updateMessage'), `❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showMessage(document.getElementById('updateMessage'), `Error: ${error.message}`, 'error');
+    }
+}
+
+let pollInterval = null;
+
+async function pollUpdateJob(jobId) {
+    // Show the status panel
+    document.getElementById('updateStatusPanel').style.display = 'block';
+    document.getElementById('startUpdateBtn').disabled = true;
+    
+    const phaseDescriptions = {
+        'download': 'Downloading from GitHub or preparing upload...',
+        'validate': 'Validating package structure...',
+        'backup': 'Creating backup of current version...',
+        'deploy': 'Extracting to staging directory...',
+        'install': 'Installing dependencies...',
+        'swap': 'Performing atomic deployment swap...',
+        'restart': '⟳ Restarting service - may be briefly unavailable...',
+        'health_check': '🔍 Verifying service health...',
+        'done': '✅ Update complete!'
+    };
+    
+    const poll = async () => {
+        try {
+            const response = await fetch(`/api/update/job/${jobId}`);
+            const job = await response.json();
+            
+            // Update UI with current state
+            document.getElementById('updatePhase').textContent = 
+                job.phase.charAt(0).toUpperCase() + job.phase.slice(1);
+            document.getElementById('updatePercent').textContent = `${job.progress_percent}%`;
+            document.getElementById('updatePhaseDescription').textContent = 
+                phaseDescriptions[job.phase] || '';
+            document.getElementById('progressBar').style.width = `${job.progress_percent}%`;
+            
+            // Show logs
+            const logsDiv = document.getElementById('updateLogs');
+            if (job.logs && job.logs.length > 0) {
+                logsDiv.innerHTML = job.logs.map(log => 
+                    `<div>${escapeHtml(log)}</div>`
+                ).join('');
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+            
+            // Check if done
+            if (job.status === 'completed') {
+                showMessage(document.getElementById('updateMessage'), '✅ Update completed successfully!', 'success');
+                document.getElementById('updateStatusPanel').style.display = 'none';
+                document.getElementById('startUpdateBtn').disabled = false;
+                clearInterval(pollInterval);
+                loadUpdateHistory();
+                loadBackups();
+                loadCurrentVersion();
+            } else if (job.status === 'failed') {
+                showMessage(document.getElementById('updateMessage'), `❌ Update failed: ${job.error_message}`, 'error');
+                document.getElementById('updateStatusPanel').style.display = 'none';
+                document.getElementById('startUpdateBtn').disabled = false;
+                clearInterval(pollInterval);
+                loadUpdateHistory();
+            } else if (job.status === 'rolled_back') {
+                showMessage(document.getElementById('updateMessage'), `⚠️ Update rolled back: ${job.error_message}`, 'warning');
+                document.getElementById('updateStatusPanel').style.display = 'none';
+                document.getElementById('startUpdateBtn').disabled = false;
+                clearInterval(pollInterval);
+                loadUpdateHistory();
+                loadBackups();
+                loadCurrentVersion();
+            }
+        } catch (error) {
+            // Network error - might be service restarting
+            console.log('Connection check failed, service may be restarting...');
+        }
+    };
+    
+    // Poll immediately and then every 2 seconds
+    await poll();
+    pollInterval = setInterval(poll, 2000);
+}
+
+async function loadUpdateHistory() {
+    try {
+        const response = await fetch('/api/update/history?limit=5');
+        const data = await response.json();
+        
+        const history = data.history || [];
+        const historyDiv = document.getElementById('updateHistory');
+        
+        if (history.length === 0) {
+            historyDiv.innerHTML = '<p style="color: #999;">No update history</p>';
+            return;
+        }
+        
+        let html = '<table style="width: 100%; font-size: 12px;"><thead><tr><th>Time</th><th>Status</th><th>Source</th><th>Details</th></tr></thead><tbody>';
+        
+        for (const job of history) {
+            const date = new Date(job.created_at);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            const statusBadge = job.status === 'completed' ? '✅' : job.status === 'failed' ? '❌' : '⏳';
+            const source = job.source === 'github' ? `${job.repo_url} (${job.branch})` : job.source;
+            
+            html += `<tr>
+                <td>${dateStr}</td>
+                <td>${statusBadge} ${job.status}</td>
+                <td>${source}</td>
+                <td>${job.error_message ? job.error_message : ''}</td>
+            </tr>`;
+        }
+        
+        html += '</tbody></table>';
+        historyDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading history:', error);
+        document.getElementById('updateHistory').innerHTML = '<p style="color: #dc3545;">Error loading history</p>';
+    }
+}
+
+async function loadBackups() {
+    try {
+        const response = await fetch('/api/update/backups');
+        const data = await response.json();
+        
+        const backups = data.backups || [];
+        const backupsDiv = document.getElementById('backupsList');
+        
+        if (backups.length === 0) {
+            backupsDiv.innerHTML = '<p style="color: #999;">No backups available</p>';
+            document.getElementById('rollbackSection').style.display = 'none';
+            return;
+        }
+        
+        document.getElementById('rollbackSection').style.display = 'block';
+        
+        let html = '<table style="width: 100%; font-size: 12px;"><thead><tr><th>Backup</th><th>Size</th><th>Action</th></tr></thead><tbody>';
+        
+        for (const backup of backups) {
+            const sizeMB = (backup.size_bytes / 1024 / 1024).toFixed(1);
+            const dateStr = backup.timestamp.replace(/_/g, ' ');
+            
+            html += `<tr>
+                <td>${dateStr}</td>
+                <td>${sizeMB} MB</td>
+                <td><button onclick="performRollback('${backup.name}')" class="danger" style="width: 100%; padding: 6px;">Restore</button></td>
+            </tr>`;
+        }
+        
+        html += '</tbody></table>';
+        backupsDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading backups:', error);
+        document.getElementById('backupsList').innerHTML = '<p style="color: #dc3545;">Error loading backups</p>';
+    }
+}
+
+async function performRollback(backupName) {
+    const confirmed = confirm(`Restore from backup ${backupName}?\n\nThis will replace the current version with the backup.`);
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/api/update/rollback/${backupName}`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage(document.getElementById('updateMessage'), `✅ Rolled back to ${backupName}`, 'success');
+            // Reload state
+            loadCurrentVersion();
+            loadUpdateHistory();
+            loadBackups();
+        } else {
+            showMessage(document.getElementById('updateMessage'), `❌ Rollback error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showMessage(document.getElementById('updateMessage'), `Error: ${error.message}`, 'error');
+    }
+}
+
+async function loadCurrentVersion() {
+    try {
+        const response = await fetch('/api/update/version');
+        const data = await response.json();
+        document.getElementById('currentVersion').textContent = data.version || 'unknown';
+    } catch (error) {
+        console.error('Error loading version:', error);
+    }
+}
+
+async function loadUpdateHistory() {
+    try {
+        const response = await fetch('/api/update/history?limit=5');
+        const data = await response.json();
+        
+        const history = data.history || [];
+        const historyDiv = document.getElementById('updateHistory');
+        
+        if (history.length === 0) {
+            historyDiv.innerHTML = '<p style="color: #999;">No update history</p>';
+            return;
+        }
+        
+        let html = '<table style="width: 100%; font-size: 12px;"><thead><tr><th>Time</th><th>Status</th><th>Source</th><th>Details</th></tr></thead><tbody>';
+        
+        for (const job of history) {
+            const date = new Date(job.created_at);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            const statusBadge = job.status === 'completed' ? '✅' : job.status === 'failed' ? '❌' : '⏳';
+            const source = job.source === 'github' ? `${job.repo_url} (${job.branch})` : job.source;
+            
+            html += `<tr>
+                <td>${dateStr}</td>
+                <td>${statusBadge} ${job.status}</td>
+                <td>${source}</td>
+                <td>${job.error_message ? job.error_message : ''}</td>
+            </tr>`;
+        }
+        
+        html += '</tbody></table>';
+        historyDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading history:', error);
+        document.getElementById('updateHistory').innerHTML = '<p style="color: #dc3545;">Error loading history</p>';
+    }
 }
 
 async function loadUpdateSettings() {
@@ -207,6 +534,12 @@ async function loadUpdateSettings() {
     } catch (error) {
         console.error('Could not load update settings', error);
     }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 async function loadCatalog() {
