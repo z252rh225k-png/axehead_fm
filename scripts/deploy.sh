@@ -159,9 +159,13 @@ echo "-> Setting up privileged update helper..."
 
 # Copy restart helper script
 mkdir -p "$PI_DIR/scripts"
-cp -f "$PI_DIR/scripts/music-player-restart.sh" "$PI_DIR/scripts/music-player-restart.sh"
-chmod +x "$PI_DIR/scripts/music-player-restart.sh"
-echo "✓ Restart helper copied and executable"
+# Make restart helper script executable (already synced via rsync)
+if [ -f "$PI_DIR/scripts/music-player-restart.sh" ]; then
+  chmod +x "$PI_DIR/scripts/music-player-restart.sh"
+  echo "✓ Restart helper is executable"
+else
+  echo "⚠️ Warning: Restart helper script not found"
+fi
 
 # Configure sudoers for web user to restart service without password
 SUDOERS_LINE="$PI_USER ALL=(ALL) NOPASSWD: /opt/music-player/scripts/music-player-restart.sh, /bin/systemctl restart music-player, /bin/systemctl status music-player"
