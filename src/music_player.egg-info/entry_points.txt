@@ -1,0 +1,5 @@
+[console_scripts]
+music-image-test = music_player.image_test:main
+music-player = music_player.player:main
+music-splash = music_player.splash:main
+music-video = music_player.video_player:main

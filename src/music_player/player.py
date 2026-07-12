@@ -2,12 +2,16 @@ import time
 import sys
 import threading
 import signal
+import logging
+import os
+from pathlib import Path
 from music_player.hardware.nfc_reader import NFCReader, is_wifi_tag, parse_wifi_ndef
 from music_player.hardware.display import Display
 from music_player.hardware.audio_engine import AudioEngine
 from music_player.hardware.button_controller import ButtonController
 from music_player.bluetooth_manager import BluetoothManager
 from music_player.hardware.network_manager import get_network_manager
+from music_player.hardware.init_utils import start_audio_detection_thread
 from music_player.state.player_state import PlayerState
 from music_player.catalog.resolver import extract_tag_payload, resolve_playback_assets
 from music_player.ui.renderer import UIRenderer
@@ -19,6 +23,7 @@ from music_player.handlers.radio_handler import RadioHandler
 from music_player.handlers.slideshow_handler import SlideshowHandler
 from music_player.handlers.game_handler import GameHandler
 from music_player.handlers.qr_handler import QRHandler
+from music_player.handlers.pokedex_handler import PokedexHandler
 
 class MusicPlayer:
     def __init__(self):
@@ -53,7 +58,8 @@ class MusicPlayer:
             "radio": RadioHandler(),
             "slideshow": SlideshowHandler(),
             "game": GameHandler(),
-            "qr": QRHandler()
+            "qr": QRHandler(),
+            "pokedex": PokedexHandler()
         }
         self.current_active_handler = None
 
@@ -217,18 +223,26 @@ class MusicPlayer:
                                 self.state.current_artwork_img = None
 
                         # Tag is present, run updates if any
-                        if self.state.current_playing and self.current_active_handler:
+                        if self.current_active_handler:
                             self.current_active_handler.update(self.state, self.hardware_dict)
 
                     else:
                         # Platter is empty (Tag removed)
                         if self.state.current_uid is not None:
-                            print("Tag removed. Halting audio.")
+                            print("Tag removed. Starting fade out.")
                             if self.current_active_handler:
+                                # Initiate fade out
                                 self.current_active_handler.stop(self.state, self.hardware_dict)
-                                self.current_active_handler = None
                             self.state.current_uid = None
-                            self.state.current_playing = False
+                        
+                        # Continue calling update while fade out completes
+                        if self.current_active_handler:
+                            self.current_active_handler.update(self.state, self.hardware_dict)
+                        
+                        # Cleanup when audio is no longer playing and no tag
+                        if not self.state.current_playing and self.state.current_uid is None:
+                            if self.current_active_handler:
+                                self.current_active_handler = None
                             self.state.current_title = ""
                             self.state.current_artwork_img = None
                             self.state.current_media_type = "audio"
@@ -253,21 +267,75 @@ class MusicPlayer:
         print("[+] Player resource cleanup finished.")
         sys.exit(0)
 
-def main():
-    player = MusicPlayer()
-    # Start web UI in background thread (Phase 1)
-    try:
-        from music_player.web.app import create_app
-        app = create_app()
-        web_thread = threading.Thread(
-            target=lambda: app.run(host='0.0.0.0', port=5000, debug=False),
-            daemon=True
-        )
-        web_thread.start()
-        print('[+] Web UI thread started on port 5000')
-    except Exception as e:
-        print(f'[!] Web UI not started: {e}')
 
+def setup_logging():
+    """Configure logging to file and console."""
+    log_dir = Path('/opt/music-player/logs')
+    
+    # Try to create/fix log directory permissions
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        # Try to fix permissions if we can (in case ansible didn't set them right)
+        log_dir.chmod(0o755)
+    except Exception as e:
+        print(f"[!] Warning: Could not ensure log directory: {e}", file=sys.stderr)
+    
+    log_file = log_dir / 'music-player.log'
+    
+    # Create logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    
+    # Try to create file handler, fall back to console-only if it fails
+    file_handler = None
+    try:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
+    except PermissionError as e:
+        print(f"[!] Warning: Cannot write to {log_file}: {e}", file=sys.stderr)
+        print(f"[!] Falling back to console-only logging", file=sys.stderr)
+    except Exception as e:
+        print(f"[!] Warning: Error setting up file logging: {e}", file=sys.stderr)
+    
+    # Console handler - write info and above
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_formatter = logging.Formatter('%(levelname)s: %(message)s')
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+    
+    return logging.getLogger(__name__)
+
+
+def main():
+    # Setup logging first
+    logger = setup_logging()
+    logger.info("🎵 Starting Axehead FM Music Player...")
+    
+    # Initialize Pokédex cache (pre-cache Gen 1 Pokémon)
+    try:
+        from music_player.pokedex_cache import setup_cache
+        logger.info("Initializing Pokédex cache...")
+        setup_cache()
+        logger.info("Pokédex cache ready!")
+    except ImportError:
+        logger.warning("Pokédex module not available, skipping cache setup")
+    except Exception as e:
+        logger.warning(f"Pokédex cache setup error (non-fatal): {e}")
+    
+    # Start USB audio hardware detection in background thread (non-blocking)
+    # This allows the player to start immediately while waiting for USB audio to appear
+    logger.info("Starting audio hardware detection (background thread)...")
+    start_audio_detection_thread(callback=None, timeout=30)
+    
+    # Initialize and run player immediately (don't wait for audio hardware)
+    logger.info("Initializing player services...")
+    player = MusicPlayer()
     player.run()
 
 if __name__ == "__main__":

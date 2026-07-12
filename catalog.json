@@ -19,8 +19,8 @@
   "video_01": {
     "type": "video",
     "title": "Never Gonna Give You Up",
-    "video": "/opt/music-player/media/video/nggyu.bin",
-    "audio": "/opt/music-player/media/audio/nggyu.mp3"
+    "video": "/opt/music-player/media/video/video4.bin",
+    "audio": "/opt/music-player/media/audio/song4.mp3"
   },
   "nfc_token_lyric": {
     "type": "radio",

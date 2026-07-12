@@ -1,0 +1,21 @@
+[Unit]
+Description=Axehead FM Web Service
+After=network.target
+
+[Service]
+Type=simple
+User=user
+WorkingDirectory=/opt/music-player
+ExecStart=/opt/music-player/venv/bin/python -m flask --app music_player.web.app run --host=0.0.0.0 --port=5000
+StandardOutput=append:/opt/music-player/logs/music-web.log
+StandardError=append:/opt/music-player/logs/music-web.log
+Restart=on-failure
+RestartSec=10
+
+# Python execution rules
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=FLASK_ENV=production
+
+[Install]
+WantedBy=multi-user.target

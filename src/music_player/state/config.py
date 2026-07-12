@@ -1,8 +1,25 @@
 import os
 
 # Centralized configuration and paths
-CATALOG_PATH = "/opt/music-player/catalog.json"
-LOCAL_CATALOG_FALLBACK = "catalog.json"
+# Built-in catalog (read-only, deployed via ansible)
+BUILTIN_CATALOG_PATH = "/opt/music-player/catalog.json"
+LOCAL_BUILTIN_CATALOG_FALLBACK = "catalog.json"
+
+# User catalog (editable via web UI, persists across deployments)
+USER_CATALOG_PATH = "/opt/music-player/user_catalog.json"
+LOCAL_USER_CATALOG_FALLBACK = "user_catalog.json"
+
+# Deprecated: kept for backward compatibility
+CATALOG_PATH = BUILTIN_CATALOG_PATH
+LOCAL_CATALOG_FALLBACK = LOCAL_BUILTIN_CATALOG_FALLBACK
+
+# Built-in media (deployed via ansible)
+BUILTIN_MEDIA_PATH = "/opt/music-player/media"
+LOCAL_BUILTIN_MEDIA_FALLBACK = "media"
+
+# User media (editable via web UI, persists across deployments)
+USER_MEDIA_PATH = "/opt/music-player/user_media"
+LOCAL_USER_MEDIA_FALLBACK = "user_media"
 
 USER_CONFIG_PATH = "/opt/music-player/config.json"
 LOCAL_USER_CONFIG_FALLBACK = "config.json"
@@ -26,7 +43,9 @@ _defaults = {
     "wifi_config": {},
     "hotspot_ssid": "AxeheadFM",
     "hotspot_password": "pi1234567",
-    "wifi_setup_enabled": True
+    "wifi_setup_enabled": True,
+    "audio_fade_in": 0.05,
+    "audio_fade_out": 0.1
 }
 
 def load_user_config():
@@ -65,6 +84,10 @@ VOLUME_DEFAULT = _active_config.get("volume_default", 5)
 VOLUME_MAX = _active_config.get("volume_max", 10)
 VOLUME_MIN = _active_config.get("volume_min", 0)
 VOLUME_OVERLAY_DURATION = _active_config.get("volume_overlay_duration", 2.0)  # seconds
+
+# Audio fade settings (seconds)
+AUDIO_FADE_IN = _active_config.get("audio_fade_in", 0.0)
+AUDIO_FADE_OUT = _active_config.get("audio_fade_out", 1.0)
 # Radio config
 RADIO_TUNING_DURATION = _active_config.get("radio_tuning_duration", 2.5)  # seconds
 RADIO_DEFAULT_FREQ = _active_config.get("radio_default_freq", "96.7")

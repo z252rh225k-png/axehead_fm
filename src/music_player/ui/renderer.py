@@ -16,6 +16,9 @@ class UIRenderer:
     def render(self, display, state, bt_manager):
         if state.current_media_type == "qr" and getattr(state, "current_playing", False):
             return
+        
+        if state.current_media_type == "pokedex" and getattr(state, "current_playing", False):
+            return
 
         # Decide which screen to draw
         with display.canvas() as draw:

@@ -1,0 +1,193 @@
+---
+- name: Deploy Axehead FM & Configure PipeWire
+  hosts: pi
+  become: true
+  vars:
+    app_user: "user"
+    app_dir: "/opt/music-player"
+    
+  tasks:
+    # --- 1. SYSTEM PACKAGES & PIPEWIRE ---
+    - name: Install system dependencies and PipeWire stack
+      apt:
+        name:
+          - git
+          - python3-dev
+          - python3-venv
+          - python3-packaging
+          - build-essential
+          - swig
+          - liblgpio-dev
+          - mpv
+          - pipewire
+          - wireplumber
+          - pipewire-pulse
+          - pipewire-alsa
+          - pulseaudio-utils
+        state: present
+        update_cache: yes
+
+    # --- 2. HARDWARE & BOOT CONFIGURATION ---
+    - name: Ensure USB audio modules load on boot
+      copy:
+        dest: /etc/modules-load.d/usb-audio.conf
+        content: "snd_usb_audio"
+
+    - name: Enable I2C and disable serial console
+      command: "{{ item }}"
+      loop:
+        - raspi-config nonint do_i2c 0
+        - raspi-config nonint do_serial_cons 1
+        - raspi-config nonint do_serial_hw 0
+      changed_when: false
+
+    - name: Ensure UART is enabled
+      lineinfile:
+        path: /boot/firmware/config.txt
+        regexp: '^#?enable_uart='
+        line: 'enable_uart=1'
+        state: present
+      register: uart_config
+
+    - name: Configure USB and Hardware settings for Pi 3 A+
+      blockinfile:
+        path: /boot/firmware/config.txt
+        block: |
+          # USB power and host mode fix
+          dtparam=usb_max_power_enable=1
+          dtoverlay=dwc2
+          dwc_otg.lpm_enable=0
+        marker: "# {mark} ANSIBLE MANAGED USB CONFIG"
+        insertafter: EOF
+      register: usb_config
+
+    - name: Reboot to apply hardware changes
+      reboot:
+        msg: "Rebooting to apply hardware config changes for Axehead FM"
+      when: uart_config.changed or usb_config.changed
+
+    # # --- 3. HARDWARE PRE-FLIGHT CHECK ---
+    # - name: Verify USB Audio Hardware is detected
+    #   shell: aplay -l | grep -q "USB Audio"
+    #   register: usb_check
+    #   changed_when: false
+    #   ignore_errors: true
+
+    # - name: Fail if USB Audio Hardware is not detected
+    #   fail:
+    #     msg: "CRITICAL: USB Audio device not found. Check physical connection or power."
+    #   when: usb_check.rc != 0
+
+    # --- 4. DIRECTORY STRUCTURE ---
+    - name: Ensure base directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - "{{ app_dir }}/logs"
+        - "{{ app_dir }}/staging"
+        - "{{ app_dir }}/backups"
+        - "{{ app_dir }}/updates"
+        - "{{ app_dir }}/scripts"
+        - "/opt/music-player/media/audio"
+        - "/opt/music-player/media/video"
+        - "/opt/music-player/media/images"
+        - "/opt/music-player/media/thumbnails"
+        - "/opt/music-player/user_media/audio"
+        - "/opt/music-player/user_media/video"
+        - "/opt/music-player/user_media/images"
+        - "/opt/music-player/user_media/thumbnails"
+        - "/opt/music-player/pokedex_assets"
+        - "/opt/music-player/fonts"
+
+    # --- 5. CODE SYNCHRONIZATION ---
+    - name: Sync project files from Mac to Pi (including built-in media)
+      ansible.posix.synchronize:
+        src: "/Users/robert/src/axehead_fm/" 
+        dest: "/opt/music-player/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=venv/"
+          - "--exclude=.git/"
+          - "--exclude=ansible/"
+          - "--exclude=__pycache__"
+          - "--exclude=.DS_Store"
+          - "--exclude=logs/"
+          - "--exclude=user_catalog.json"
+          - "--exclude=user_media/"
+      become: false
+
+    # Re-ensure logs directory has correct permissions after sync
+    - name: Fix log directory permissions after sync
+      file:
+        path: "{{ app_dir }}/logs"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+        recurse: yes
+
+    # Initialize user_catalog.json if it doesn't exist
+    - name: Initialize user catalog if not present
+      copy:
+        content: "{}"
+        dest: "{{ app_dir }}/user_catalog.json"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+        force: no
+
+    # --- 6. PYTHON VIRTUAL ENVIRONMENT ---
+    - name: Ensure pip is up to date and project installed
+      pip:
+        name: "."
+        editable: true
+        virtualenv: "{{ app_dir }}/venv"
+        virtualenv_command: python3 -m venv
+        chdir: "{{ app_dir }}"
+      become_user: "{{ app_user }}"
+
+    # --- 7. PIPEWIRE USER SERVICES ---
+    - name: Enable loginctl lingering
+      command: "loginctl enable-linger {{ app_user }}"
+      changed_when: false
+
+    - name: Enable PipeWire services
+      systemd:
+        name: "{{ item }}"
+        scope: user
+        enabled: yes
+        state: restarted
+      become_user: "{{ app_user }}"
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/1000"
+      loop:
+        - pipewire
+        - wireplumber
+        - pipewire-pulse
+
+    # --- 8. APP SERVICES SETUP ---
+    - name: Copy primary app systemd services
+      copy:
+        src: "{{ app_dir }}/systemd/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        remote_src: yes
+      loop:
+        - music-player.service
+        - music-splash.service
+        - music-web.service
+
+    - name: Reload systemd and enable application services
+      systemd:
+        daemon_reload: yes
+        name: "{{ item }}"
+        enabled: yes
+        state: restarted
+      loop:
+        - music-player.service
+        - music-splash.service
+        - music-web.service

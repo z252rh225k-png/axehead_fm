@@ -66,23 +66,29 @@ sudo chmod 755 "$PI_DIR/staging" "$PI_DIR/backups" "$PI_DIR/updates"
 sudo rm -rf "$PI_DIR/staging/clone" "$PI_DIR/staging/extracted" "$PI_DIR/staging"/*
 
 # --- AUDIO & HARDWARE CONFIGURATION ---
-echo "-> Configuring Audio (USB Card 2) & Cleaning Hardware Overlays..."
+echo "-> Configuring USB & Audio (Card 2)..."
 CONFIG_FILE="/boot/firmware/config.txt"
 [ ! -f "$CONFIG_FILE" ] && CONFIG_FILE="/boot/config.txt"
 
-# 1. Remove the DWC2 overlay (it breaks the Pi 3 A+ USB port)
-sudo sed -i '/dtoverlay=dwc2/d' "$CONFIG_FILE"
-sudo sed -i '/# Axehead FM USB Fix/d' "$CONFIG_FILE"
+# Ensure USB enumeration on boot (disable low-power mode)
+if ! grep -q "dwc_otg.lpm_enable=0" "$CONFIG_FILE"; then
+  echo "# USB enumeration fix for Pi 3 A+" | sudo tee -a "$CONFIG_FILE" > /dev/null
+  echo "dtparam=usb_max_power_enable=1" | sudo tee -a "$CONFIG_FILE" > /dev/null
+  echo "dtoverlay=dwc2" | sudo tee -a "$CONFIG_FILE" > /dev/null
+fi
 
-# 2. Force Audio Output to Card 2 via .asoundrc
+# 2. Configure Audio Output to Card 2 via .asoundrc
+# Use plughw to automatically handle format conversion and resampling
+# This is a proven, stable approach for USB audio on Raspberry Pi
 cat <<CONFIG | sudo tee /home/$PI_USER/.asoundrc
 pcm.!default {
-  type hw
-  card 2
+    type plughw
+    card 2
 }
+
 ctl.!default {
-  type hw
-  card 2
+    type hw
+    card 2
 }
 CONFIG
 sudo chown "$PI_USER:$PI_USER" /home/$PI_USER/.asoundrc
@@ -91,7 +97,8 @@ sudo chown "$PI_USER:$PI_USER" /home/$PI_USER/.asoundrc
 if [ "$INSTALL_DEPS" = "true" ]; then
   echo "-> Installing system dependencies..."
   sudo apt-get update
-  sudo apt-get install -y git python3-dev python3-venv build-essential libpulse0 pulseaudio-utils swig liblgpio-dev
+  # Install ALSA plugins for plughw support, pulse/pipewire, and mpv for radio
+  sudo apt-get install -y git python3-dev python3-venv build-essential libpulse0 pulseaudio-utils swig liblgpio-dev mpv libasound2-plugins
   sudo raspi-config nonint do_i2c 0 && sudo raspi-config nonint do_serial_cons 1 && sudo raspi-config nonint do_serial_hw 0
 
   echo "-> Building virtual environment & installing Python packages..."
@@ -147,6 +154,9 @@ fi
 
 echo "-> Updating systemd services..."
 cd "$PI_DIR/systemd"
+# Remove any commented out SDL lines or old junk before copying
+sed -i '/SDL_AUDIODRIVER/d' *.service
+sed -i '/# Removed:/d' *.service
 sed -i "s/User=pi/User=$PI_USER/g" *.service
 sudo cp *.service /etc/systemd/system/
 sudo systemctl daemon-reload
@@ -173,11 +183,11 @@ else
   echo "⚠️ Warning: Restart helper script not found"
 fi
 
-# Configure sudoers for web user to restart service without password
-SUDOERS_LINE="$PI_USER ALL=(ALL) NOPASSWD: /opt/music-player/scripts/music-player-restart.sh, /bin/systemctl restart music-player, /bin/systemctl restart music-web, /bin/systemctl status music-player, /bin/systemctl status music-web"
+# Configure sudoers for web user to manage services without password
+SUDOERS_LINE="$PI_USER ALL=(ALL) NOPASSWD: /opt/music-player/scripts/music-player-restart.sh, /bin/systemctl restart music-player, /bin/systemctl stop music-player, /bin/systemctl start music-player, /bin/systemctl status music-player, /bin/systemctl restart music-web, /bin/systemctl stop music-web, /bin/systemctl start music-web, /bin/systemctl status music-web, /bin/systemctl restart music-splash, /bin/systemctl stop music-splash, /bin/systemctl start music-splash, /bin/systemctl status music-splash, /usr/bin/journalctl, /usr/bin/vcgencmd"
 
-# Check if sudoers entry already exists
-if ! sudo grep -q "music-player-restart.sh" /etc/sudoers.d/music-player 2>/dev/null; then
+# Check if sudoers entry already exists (check for a substring to see if update is needed)
+if ! sudo grep -q "music-splash" /etc/sudoers.d/music-player 2>/dev/null; then
   echo "$SUDOERS_LINE" | sudo tee /etc/sudoers.d/music-player > /dev/null
   sudo chmod 440 /etc/sudoers.d/music-player
   echo "✓ Sudoers configured for $PI_USER"

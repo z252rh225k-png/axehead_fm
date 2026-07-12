@@ -1,0 +1,1277 @@
+{
+    "1": {
+        "name": "Bulbasaur",
+        "height_m": 0.7,
+        "weight_kg": 6.9,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "2": {
+        "name": "Ivysaur",
+        "height_m": 1.0,
+        "weight_kg": 13.0,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "3": {
+        "name": "Venusaur",
+        "height_m": 2.0,
+        "weight_kg": 100.0,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "4": {
+        "name": "Charmander",
+        "height_m": 0.6,
+        "weight_kg": 8.5,
+        "type": [
+            "Fire"
+        ]
+    },
+    "5": {
+        "name": "Charmeleon",
+        "height_m": 1.1,
+        "weight_kg": 19.0,
+        "type": [
+            "Fire"
+        ]
+    },
+    "6": {
+        "name": "Charizard",
+        "height_m": 1.7,
+        "weight_kg": 90.5,
+        "type": [
+            "Fire",
+            "Flying"
+        ]
+    },
+    "7": {
+        "name": "Squirtle",
+        "height_m": 0.5,
+        "weight_kg": 9.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "8": {
+        "name": "Wartortle",
+        "height_m": 1.0,
+        "weight_kg": 22.5,
+        "type": [
+            "Water"
+        ]
+    },
+    "9": {
+        "name": "Blastoise",
+        "height_m": 1.6,
+        "weight_kg": 85.5,
+        "type": [
+            "Water"
+        ]
+    },
+    "10": {
+        "name": "Caterpie",
+        "height_m": 0.3,
+        "weight_kg": 2.9,
+        "type": [
+            "Bug"
+        ]
+    },
+    "11": {
+        "name": "Metapod",
+        "height_m": 0.7,
+        "weight_kg": 9.9,
+        "type": [
+            "Bug"
+        ]
+    },
+    "12": {
+        "name": "Butterfree",
+        "height_m": 1.1,
+        "weight_kg": 32.0,
+        "type": [
+            "Bug",
+            "Flying"
+        ]
+    },
+    "13": {
+        "name": "Weedle",
+        "height_m": 0.3,
+        "weight_kg": 3.2,
+        "type": [
+            "Bug",
+            "Poison"
+        ]
+    },
+    "14": {
+        "name": "Kakuna",
+        "height_m": 0.6,
+        "weight_kg": 10.0,
+        "type": [
+            "Bug",
+            "Poison"
+        ]
+    },
+    "15": {
+        "name": "Beedrill",
+        "height_m": 1.0,
+        "weight_kg": 29.5,
+        "type": [
+            "Bug",
+            "Poison"
+        ]
+    },
+    "16": {
+        "name": "Pidgey",
+        "height_m": 0.3,
+        "weight_kg": 1.8,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "17": {
+        "name": "Pidgeotto",
+        "height_m": 1.1,
+        "weight_kg": 30.0,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "18": {
+        "name": "Pidgeot",
+        "height_m": 1.5,
+        "weight_kg": 39.5,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "19": {
+        "name": "Rattata",
+        "height_m": 0.3,
+        "weight_kg": 3.5,
+        "type": [
+            "Normal"
+        ]
+    },
+    "20": {
+        "name": "Raticate",
+        "height_m": 0.7,
+        "weight_kg": 18.5,
+        "type": [
+            "Normal"
+        ]
+    },
+    "21": {
+        "name": "Spearow",
+        "height_m": 0.3,
+        "weight_kg": 2.0,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "22": {
+        "name": "Fearow",
+        "height_m": 1.2,
+        "weight_kg": 38.0,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "23": {
+        "name": "Ekans",
+        "height_m": 2.0,
+        "weight_kg": 6.9,
+        "type": [
+            "Poison"
+        ]
+    },
+    "24": {
+        "name": "Arbok",
+        "height_m": 3.5,
+        "weight_kg": 65.0,
+        "type": [
+            "Poison"
+        ]
+    },
+    "25": {
+        "name": "Pikachu",
+        "height_m": 0.4,
+        "weight_kg": 6.0,
+        "type": [
+            "Electric"
+        ]
+    },
+    "26": {
+        "name": "Raichu",
+        "height_m": 0.8,
+        "weight_kg": 30.0,
+        "type": [
+            "Electric"
+        ]
+    },
+    "27": {
+        "name": "Sandshrew",
+        "height_m": 0.6,
+        "weight_kg": 12.0,
+        "type": [
+            "Ground"
+        ]
+    },
+    "28": {
+        "name": "Sandslash",
+        "height_m": 1.0,
+        "weight_kg": 29.5,
+        "type": [
+            "Ground"
+        ]
+    },
+    "29": {
+        "name": "Nidoran-f",
+        "height_m": 0.4,
+        "weight_kg": 7.0,
+        "type": [
+            "Poison"
+        ]
+    },
+    "30": {
+        "name": "Nidorina",
+        "height_m": 0.8,
+        "weight_kg": 20.0,
+        "type": [
+            "Poison"
+        ]
+    },
+    "31": {
+        "name": "Nidoqueen",
+        "height_m": 1.3,
+        "weight_kg": 60.0,
+        "type": [
+            "Poison",
+            "Ground"
+        ]
+    },
+    "32": {
+        "name": "Nidoran-m",
+        "height_m": 0.5,
+        "weight_kg": 9.0,
+        "type": [
+            "Poison"
+        ]
+    },
+    "33": {
+        "name": "Nidorino",
+        "height_m": 0.9,
+        "weight_kg": 19.5,
+        "type": [
+            "Poison"
+        ]
+    },
+    "34": {
+        "name": "Nidoking",
+        "height_m": 1.4,
+        "weight_kg": 62.0,
+        "type": [
+            "Poison",
+            "Ground"
+        ]
+    },
+    "35": {
+        "name": "Clefairy",
+        "height_m": 0.6,
+        "weight_kg": 7.5,
+        "type": [
+            "Fairy"
+        ]
+    },
+    "36": {
+        "name": "Clefable",
+        "height_m": 1.3,
+        "weight_kg": 40.0,
+        "type": [
+            "Fairy"
+        ]
+    },
+    "37": {
+        "name": "Vulpix",
+        "height_m": 0.6,
+        "weight_kg": 9.9,
+        "type": [
+            "Fire"
+        ]
+    },
+    "38": {
+        "name": "Ninetales",
+        "height_m": 1.1,
+        "weight_kg": 19.9,
+        "type": [
+            "Fire"
+        ]
+    },
+    "39": {
+        "name": "Jigglypuff",
+        "height_m": 0.5,
+        "weight_kg": 5.5,
+        "type": [
+            "Normal",
+            "Fairy"
+        ]
+    },
+    "40": {
+        "name": "Wigglytuff",
+        "height_m": 1.0,
+        "weight_kg": 12.0,
+        "type": [
+            "Normal",
+            "Fairy"
+        ]
+    },
+    "41": {
+        "name": "Zubat",
+        "height_m": 0.8,
+        "weight_kg": 7.5,
+        "type": [
+            "Poison",
+            "Flying"
+        ]
+    },
+    "42": {
+        "name": "Golbat",
+        "height_m": 1.6,
+        "weight_kg": 55.0,
+        "type": [
+            "Poison",
+            "Flying"
+        ]
+    },
+    "43": {
+        "name": "Oddish",
+        "height_m": 0.5,
+        "weight_kg": 5.4,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "44": {
+        "name": "Gloom",
+        "height_m": 0.8,
+        "weight_kg": 8.6,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "45": {
+        "name": "Vileplume",
+        "height_m": 1.2,
+        "weight_kg": 18.6,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "46": {
+        "name": "Paras",
+        "height_m": 0.3,
+        "weight_kg": 5.4,
+        "type": [
+            "Bug",
+            "Grass"
+        ]
+    },
+    "47": {
+        "name": "Parasect",
+        "height_m": 1.0,
+        "weight_kg": 29.5,
+        "type": [
+            "Bug",
+            "Grass"
+        ]
+    },
+    "48": {
+        "name": "Venonat",
+        "height_m": 1.0,
+        "weight_kg": 30.0,
+        "type": [
+            "Bug",
+            "Poison"
+        ]
+    },
+    "49": {
+        "name": "Venomoth",
+        "height_m": 1.5,
+        "weight_kg": 12.5,
+        "type": [
+            "Bug",
+            "Poison"
+        ]
+    },
+    "50": {
+        "name": "Diglett",
+        "height_m": 0.2,
+        "weight_kg": 0.8,
+        "type": [
+            "Ground"
+        ]
+    },
+    "51": {
+        "name": "Dugtrio",
+        "height_m": 0.7,
+        "weight_kg": 33.3,
+        "type": [
+            "Ground"
+        ]
+    },
+    "52": {
+        "name": "Meowth",
+        "height_m": 0.4,
+        "weight_kg": 4.2,
+        "type": [
+            "Normal"
+        ]
+    },
+    "53": {
+        "name": "Persian",
+        "height_m": 1.0,
+        "weight_kg": 32.0,
+        "type": [
+            "Normal"
+        ]
+    },
+    "54": {
+        "name": "Psyduck",
+        "height_m": 0.8,
+        "weight_kg": 19.6,
+        "type": [
+            "Water"
+        ]
+    },
+    "55": {
+        "name": "Golduck",
+        "height_m": 1.7,
+        "weight_kg": 76.6,
+        "type": [
+            "Water"
+        ]
+    },
+    "56": {
+        "name": "Mankey",
+        "height_m": 0.5,
+        "weight_kg": 28.0,
+        "type": [
+            "Fighting"
+        ]
+    },
+    "57": {
+        "name": "Primeape",
+        "height_m": 1.0,
+        "weight_kg": 32.0,
+        "type": [
+            "Fighting"
+        ]
+    },
+    "58": {
+        "name": "Growlithe",
+        "height_m": 0.7,
+        "weight_kg": 19.0,
+        "type": [
+            "Fire"
+        ]
+    },
+    "59": {
+        "name": "Arcanine",
+        "height_m": 1.9,
+        "weight_kg": 155.0,
+        "type": [
+            "Fire"
+        ]
+    },
+    "60": {
+        "name": "Poliwag",
+        "height_m": 0.6,
+        "weight_kg": 12.4,
+        "type": [
+            "Water"
+        ]
+    },
+    "61": {
+        "name": "Poliwhirl",
+        "height_m": 1.0,
+        "weight_kg": 20.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "62": {
+        "name": "Poliwrath",
+        "height_m": 1.3,
+        "weight_kg": 54.0,
+        "type": [
+            "Water",
+            "Fighting"
+        ]
+    },
+    "63": {
+        "name": "Abra",
+        "height_m": 0.9,
+        "weight_kg": 19.5,
+        "type": [
+            "Psychic"
+        ]
+    },
+    "64": {
+        "name": "Kadabra",
+        "height_m": 1.3,
+        "weight_kg": 56.5,
+        "type": [
+            "Psychic"
+        ]
+    },
+    "65": {
+        "name": "Alakazam",
+        "height_m": 1.5,
+        "weight_kg": 48.0,
+        "type": [
+            "Psychic"
+        ]
+    },
+    "66": {
+        "name": "Machop",
+        "height_m": 0.8,
+        "weight_kg": 19.5,
+        "type": [
+            "Fighting"
+        ]
+    },
+    "67": {
+        "name": "Machoke",
+        "height_m": 1.5,
+        "weight_kg": 70.5,
+        "type": [
+            "Fighting"
+        ]
+    },
+    "68": {
+        "name": "Machamp",
+        "height_m": 1.6,
+        "weight_kg": 130.0,
+        "type": [
+            "Fighting"
+        ]
+    },
+    "69": {
+        "name": "Bellsprout",
+        "height_m": 0.7,
+        "weight_kg": 4.0,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "70": {
+        "name": "Weepinbell",
+        "height_m": 1.0,
+        "weight_kg": 6.4,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "71": {
+        "name": "Victreebel",
+        "height_m": 1.7,
+        "weight_kg": 15.5,
+        "type": [
+            "Grass",
+            "Poison"
+        ]
+    },
+    "72": {
+        "name": "Tentacool",
+        "height_m": 0.9,
+        "weight_kg": 45.5,
+        "type": [
+            "Water",
+            "Poison"
+        ]
+    },
+    "73": {
+        "name": "Tentacruel",
+        "height_m": 1.6,
+        "weight_kg": 55.0,
+        "type": [
+            "Water",
+            "Poison"
+        ]
+    },
+    "74": {
+        "name": "Geodude",
+        "height_m": 0.4,
+        "weight_kg": 20.0,
+        "type": [
+            "Rock",
+            "Ground"
+        ]
+    },
+    "75": {
+        "name": "Graveler",
+        "height_m": 1.0,
+        "weight_kg": 105.0,
+        "type": [
+            "Rock",
+            "Ground"
+        ]
+    },
+    "76": {
+        "name": "Golem",
+        "height_m": 1.4,
+        "weight_kg": 300.0,
+        "type": [
+            "Rock",
+            "Ground"
+        ]
+    },
+    "77": {
+        "name": "Ponyta",
+        "height_m": 1.0,
+        "weight_kg": 30.0,
+        "type": [
+            "Fire"
+        ]
+    },
+    "78": {
+        "name": "Rapidash",
+        "height_m": 1.7,
+        "weight_kg": 95.0,
+        "type": [
+            "Fire"
+        ]
+    },
+    "79": {
+        "name": "Slowpoke",
+        "height_m": 1.2,
+        "weight_kg": 36.0,
+        "type": [
+            "Water",
+            "Psychic"
+        ]
+    },
+    "80": {
+        "name": "Slowbro",
+        "height_m": 1.6,
+        "weight_kg": 78.5,
+        "type": [
+            "Water",
+            "Psychic"
+        ]
+    },
+    "81": {
+        "name": "Magnemite",
+        "height_m": 0.3,
+        "weight_kg": 6.0,
+        "type": [
+            "Electric",
+            "Steel"
+        ]
+    },
+    "82": {
+        "name": "Magneton",
+        "height_m": 1.0,
+        "weight_kg": 60.0,
+        "type": [
+            "Electric",
+            "Steel"
+        ]
+    },
+    "83": {
+        "name": "Farfetchd",
+        "height_m": 0.8,
+        "weight_kg": 15.0,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "84": {
+        "name": "Doduo",
+        "height_m": 1.4,
+        "weight_kg": 39.2,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "85": {
+        "name": "Dodrio",
+        "height_m": 1.8,
+        "weight_kg": 85.2,
+        "type": [
+            "Normal",
+            "Flying"
+        ]
+    },
+    "86": {
+        "name": "Seel",
+        "height_m": 1.1,
+        "weight_kg": 90.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "87": {
+        "name": "Dewgong",
+        "height_m": 1.7,
+        "weight_kg": 120.0,
+        "type": [
+            "Water",
+            "Ice"
+        ]
+    },
+    "88": {
+        "name": "Grimer",
+        "height_m": 0.9,
+        "weight_kg": 30.0,
+        "type": [
+            "Poison"
+        ]
+    },
+    "89": {
+        "name": "Muk",
+        "height_m": 1.2,
+        "weight_kg": 30.0,
+        "type": [
+            "Poison"
+        ]
+    },
+    "90": {
+        "name": "Shellder",
+        "height_m": 0.3,
+        "weight_kg": 4.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "91": {
+        "name": "Cloyster",
+        "height_m": 1.5,
+        "weight_kg": 132.5,
+        "type": [
+            "Water",
+            "Ice"
+        ]
+    },
+    "92": {
+        "name": "Gastly",
+        "height_m": 1.3,
+        "weight_kg": 0.1,
+        "type": [
+            "Ghost",
+            "Poison"
+        ]
+    },
+    "93": {
+        "name": "Haunter",
+        "height_m": 1.6,
+        "weight_kg": 0.1,
+        "type": [
+            "Ghost",
+            "Poison"
+        ]
+    },
+    "94": {
+        "name": "Gengar",
+        "height_m": 1.5,
+        "weight_kg": 40.5,
+        "type": [
+            "Ghost",
+            "Poison"
+        ]
+    },
+    "95": {
+        "name": "Onix",
+        "height_m": 8.8,
+        "weight_kg": 210.0,
+        "type": [
+            "Rock",
+            "Ground"
+        ]
+    },
+    "96": {
+        "name": "Drowzee",
+        "height_m": 1.0,
+        "weight_kg": 32.4,
+        "type": [
+            "Psychic"
+        ]
+    },
+    "97": {
+        "name": "Hypno",
+        "height_m": 1.6,
+        "weight_kg": 75.6,
+        "type": [
+            "Psychic"
+        ]
+    },
+    "98": {
+        "name": "Krabby",
+        "height_m": 0.4,
+        "weight_kg": 6.5,
+        "type": [
+            "Water"
+        ]
+    },
+    "99": {
+        "name": "Kingler",
+        "height_m": 1.3,
+        "weight_kg": 60.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "100": {
+        "name": "Voltorb",
+        "height_m": 0.5,
+        "weight_kg": 10.4,
+        "type": [
+            "Electric"
+        ]
+    },
+    "101": {
+        "name": "Electrode",
+        "height_m": 1.2,
+        "weight_kg": 66.6,
+        "type": [
+            "Electric"
+        ]
+    },
+    "102": {
+        "name": "Exeggcute",
+        "height_m": 0.4,
+        "weight_kg": 2.5,
+        "type": [
+            "Grass",
+            "Psychic"
+        ]
+    },
+    "103": {
+        "name": "Exeggutor",
+        "height_m": 2.0,
+        "weight_kg": 120.0,
+        "type": [
+            "Grass",
+            "Psychic"
+        ]
+    },
+    "104": {
+        "name": "Cubone",
+        "height_m": 0.4,
+        "weight_kg": 6.5,
+        "type": [
+            "Ground"
+        ]
+    },
+    "105": {
+        "name": "Marowak",
+        "height_m": 1.0,
+        "weight_kg": 45.0,
+        "type": [
+            "Ground"
+        ]
+    },
+    "106": {
+        "name": "Hitmonlee",
+        "height_m": 1.5,
+        "weight_kg": 49.8,
+        "type": [
+            "Fighting"
+        ]
+    },
+    "107": {
+        "name": "Hitmonchan",
+        "height_m": 1.4,
+        "weight_kg": 50.2,
+        "type": [
+            "Fighting"
+        ]
+    },
+    "108": {
+        "name": "Lickitung",
+        "height_m": 1.2,
+        "weight_kg": 65.5,
+        "type": [
+            "Normal"
+        ]
+    },
+    "109": {
+        "name": "Koffing",
+        "height_m": 0.6,
+        "weight_kg": 1.0,
+        "type": [
+            "Poison"
+        ]
+    },
+    "110": {
+        "name": "Weezing",
+        "height_m": 1.2,
+        "weight_kg": 9.5,
+        "type": [
+            "Poison"
+        ]
+    },
+    "111": {
+        "name": "Rhyhorn",
+        "height_m": 1.0,
+        "weight_kg": 115.0,
+        "type": [
+            "Ground",
+            "Rock"
+        ]
+    },
+    "112": {
+        "name": "Rhydon",
+        "height_m": 1.9,
+        "weight_kg": 120.0,
+        "type": [
+            "Ground",
+            "Rock"
+        ]
+    },
+    "113": {
+        "name": "Chansey",
+        "height_m": 1.1,
+        "weight_kg": 34.6,
+        "type": [
+            "Normal"
+        ]
+    },
+    "114": {
+        "name": "Tangela",
+        "height_m": 1.0,
+        "weight_kg": 35.0,
+        "type": [
+            "Grass"
+        ]
+    },
+    "115": {
+        "name": "Kangaskhan",
+        "height_m": 2.2,
+        "weight_kg": 80.0,
+        "type": [
+            "Normal"
+        ]
+    },
+    "116": {
+        "name": "Horsea",
+        "height_m": 0.4,
+        "weight_kg": 8.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "117": {
+        "name": "Seadra",
+        "height_m": 1.2,
+        "weight_kg": 25.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "118": {
+        "name": "Goldeen",
+        "height_m": 0.6,
+        "weight_kg": 15.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "119": {
+        "name": "Seaking",
+        "height_m": 1.3,
+        "weight_kg": 39.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "120": {
+        "name": "Staryu",
+        "height_m": 0.8,
+        "weight_kg": 34.5,
+        "type": [
+            "Water"
+        ]
+    },
+    "121": {
+        "name": "Starmie",
+        "height_m": 1.1,
+        "weight_kg": 80.0,
+        "type": [
+            "Water",
+            "Psychic"
+        ]
+    },
+    "122": {
+        "name": "Mr-mime",
+        "height_m": 1.3,
+        "weight_kg": 54.5,
+        "type": [
+            "Psychic",
+            "Fairy"
+        ]
+    },
+    "123": {
+        "name": "Scyther",
+        "height_m": 1.5,
+        "weight_kg": 56.0,
+        "type": [
+            "Bug",
+            "Flying"
+        ]
+    },
+    "124": {
+        "name": "Jynx",
+        "height_m": 1.4,
+        "weight_kg": 40.6,
+        "type": [
+            "Ice",
+            "Psychic"
+        ]
+    },
+    "125": {
+        "name": "Electabuzz",
+        "height_m": 1.1,
+        "weight_kg": 30.0,
+        "type": [
+            "Electric"
+        ]
+    },
+    "126": {
+        "name": "Magmar",
+        "height_m": 1.3,
+        "weight_kg": 44.5,
+        "type": [
+            "Fire"
+        ]
+    },
+    "127": {
+        "name": "Pinsir",
+        "height_m": 1.5,
+        "weight_kg": 55.0,
+        "type": [
+            "Bug"
+        ]
+    },
+    "128": {
+        "name": "Tauros",
+        "height_m": 1.4,
+        "weight_kg": 88.4,
+        "type": [
+            "Normal"
+        ]
+    },
+    "129": {
+        "name": "Magikarp",
+        "height_m": 0.9,
+        "weight_kg": 10.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "130": {
+        "name": "Gyarados",
+        "height_m": 6.5,
+        "weight_kg": 235.0,
+        "type": [
+            "Water",
+            "Flying"
+        ]
+    },
+    "131": {
+        "name": "Lapras",
+        "height_m": 2.5,
+        "weight_kg": 220.0,
+        "type": [
+            "Water",
+            "Ice"
+        ]
+    },
+    "132": {
+        "name": "Ditto",
+        "height_m": 0.3,
+        "weight_kg": 4.0,
+        "type": [
+            "Normal"
+        ]
+    },
+    "133": {
+        "name": "Eevee",
+        "height_m": 0.3,
+        "weight_kg": 6.5,
+        "type": [
+            "Normal"
+        ]
+    },
+    "134": {
+        "name": "Vaporeon",
+        "height_m": 1.0,
+        "weight_kg": 29.0,
+        "type": [
+            "Water"
+        ]
+    },
+    "135": {
+        "name": "Jolteon",
+        "height_m": 0.8,
+        "weight_kg": 24.5,
+        "type": [
+            "Electric"
+        ]
+    },
+    "136": {
+        "name": "Flareon",
+        "height_m": 0.9,
+        "weight_kg": 25.0,
+        "type": [
+            "Fire"
+        ]
+    },
+    "137": {
+        "name": "Porygon",
+        "height_m": 0.8,
+        "weight_kg": 36.5,
+        "type": [
+            "Normal"
+        ]
+    },
+    "138": {
+        "name": "Omanyte",
+        "height_m": 0.4,
+        "weight_kg": 7.5,
+        "type": [
+            "Rock",
+            "Water"
+        ]
+    },
+    "139": {
+        "name": "Omastar",
+        "height_m": 1.0,
+        "weight_kg": 35.0,
+        "type": [
+            "Rock",
+            "Water"
+        ]
+    },
+    "140": {
+        "name": "Kabuto",
+        "height_m": 0.5,
+        "weight_kg": 11.5,
+        "type": [
+            "Rock",
+            "Water"
+        ]
+    },
+    "141": {
+        "name": "Kabutops",
+        "height_m": 1.3,
+        "weight_kg": 40.5,
+        "type": [
+            "Rock",
+            "Water"
+        ]
+    },
+    "142": {
+        "name": "Aerodactyl",
+        "height_m": 1.8,
+        "weight_kg": 59.0,
+        "type": [
+            "Rock",
+            "Flying"
+        ]
+    },
+    "143": {
+        "name": "Snorlax",
+        "height_m": 2.1,
+        "weight_kg": 460.0,
+        "type": [
+            "Normal"
+        ]
+    },
+    "144": {
+        "name": "Articuno",
+        "height_m": 1.7,
+        "weight_kg": 55.4,
+        "type": [
+            "Ice",
+            "Flying"
+        ]
+    },
+    "145": {
+        "name": "Zapdos",
+        "height_m": 1.6,
+        "weight_kg": 52.6,
+        "type": [
+            "Electric",
+            "Flying"
+        ]
+    },
+    "146": {
+        "name": "Moltres",
+        "height_m": 2.0,
+        "weight_kg": 60.0,
+        "type": [
+            "Fire",
+            "Flying"
+        ]
+    },
+    "147": {
+        "name": "Dratini",
+        "height_m": 1.8,
+        "weight_kg": 3.3,
+        "type": [
+            "Dragon"
+        ]
+    },
+    "148": {
+        "name": "Dragonair",
+        "height_m": 4.0,
+        "weight_kg": 16.5,
+        "type": [
+            "Dragon"
+        ]
+    },
+    "149": {
+        "name": "Dragonite",
+        "height_m": 2.2,
+        "weight_kg": 210.0,
+        "type": [
+            "Dragon",
+            "Flying"
+        ]
+    },
+    "150": {
+        "name": "Mewtwo",
+        "height_m": 2.0,
+        "weight_kg": 122.0,
+        "type": [
+            "Psychic"
+        ]
+    },
+    "151": {
+        "name": "Mew",
+        "height_m": 0.4,
+        "weight_kg": 4.0,
+        "type": [
+            "Psychic"
+        ]
+    }
+}

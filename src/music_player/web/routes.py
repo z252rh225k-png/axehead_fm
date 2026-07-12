@@ -4,11 +4,15 @@ import json
 import subprocess
 from datetime import datetime
 from music_player.web.update_handler import UpdateHandler
+from music_player.web.system_handler import SystemHandler
 from music_player.web.terminal_handler import TerminalSession
 from music_player.hardware.network_manager import get_network_manager
 from music_player.web.utils import (
     is_valid_audio, is_valid_video, is_valid_image,
     sanitize_filename, generate_thumbnail, get_file_size_display
+)
+from music_player.catalog.loader import (
+    load_catalog, load_catalog_split, is_builtin_entry, is_user_entry
 )
 
 api_bp = Blueprint('api', __name__)
@@ -17,27 +21,36 @@ api_bp = Blueprint('api', __name__)
 def get_update_handler() -> UpdateHandler:
     return UpdateHandler(current_app.config['UPDATE_ROOT'])
 
-def load_catalog() -> dict:
-    path = current_app.config['CATALOG_PATH']
-    if path.exists():
-        with open(path) as f:
-            return json.load(f)
-    return {}
+def get_system_handler() -> SystemHandler:
+    return SystemHandler()
 
-def save_catalog(catalog: dict) -> bool:
+def get_user_catalog_path() -> Path:
+    """Get the user catalog path from config or use default."""
+    if 'USER_CATALOG_PATH' in current_app.config:
+        return current_app.config['USER_CATALOG_PATH']
+    return Path('/opt/music-player/user_catalog.json')
+
+def save_user_catalog(catalog: dict) -> bool:
+    """Save catalog to user catalog file only (not built-in)."""
     try:
-        path = current_app.config['CATALOG_PATH']
+        path = get_user_catalog_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
             json.dump(catalog, f, indent=2)
         return True
     except Exception as e:
-        print(f"Failed to save catalog: {e}")
+        print(f"Failed to save user catalog: {e}")
         return False
 
 @api_bp.route('/dashboard', methods=['GET'])
 def get_dashboard():
     return render_template('dashboard.html')
+
+
+@api_bp.route('/user', methods=['GET'])
+def get_user_tool():
+    """User-facing web interface for Axehead FM."""
+    return render_template('user.html')
 
 
 @api_bp.route('/terminal', methods=['GET'])
@@ -85,45 +98,374 @@ def forget_wifi_connection(connection_name):
     return jsonify({'error': message}), 500
 
 
+# --- System Management Routes ---
+
+@api_bp.route('/system/services', methods=['GET'])
+def get_services_status():
+    handler = get_system_handler()
+    return jsonify(handler.get_all_statuses())
+
+
+@api_bp.route('/system/info', methods=['GET'])
+def get_system_info():
+    handler = get_system_handler()
+    return jsonify(handler.get_system_info())
+
+
+@api_bp.route('/system/services/<service_name>/<action>', methods=['POST'])
+def control_service(service_name, action):
+    handler = get_system_handler()
+    result = handler.control_service(service_name, action)
+    if result.get('ok'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@api_bp.route('/system/services/<service_name>/logs', methods=['GET'])
+def get_service_logs(service_name):
+    lines = request.args.get('lines', 50, type=int)
+    handler = get_system_handler()
+    
+    # Check if a custom log file exists for this service
+    log_file = None
+    if service_name == "music-player":
+        log_file = "/opt/music-player/logs/music-player.log"
+    elif service_name == "music-web":
+        log_file = "/opt/music-player/logs/web.log"
+        
+    return jsonify(handler.get_logs(service_name, lines, log_file))
+
+
 @api_bp.route('/catalog', methods=['GET'])
 def get_catalog():
+    """Get merged catalog (built-in + user entries)."""
     catalog = load_catalog()
     return jsonify(catalog)
 
+@api_bp.route('/catalog/metadata', methods=['GET'])
+def get_catalog_metadata():
+    """Get catalog with metadata showing source (built-in/user) and edit permissions."""
+    catalogs = load_catalog_split()
+    result = {}
+    
+    # Add built-in entries as read-only
+    for entry_id, entry in catalogs['builtin'].items():
+        result[entry_id] = {
+            **entry,
+            '_source': 'builtin',
+            '_readonly': True
+        }
+    
+    # Add user entries, potentially overriding built-in
+    for entry_id, entry in catalogs['user'].items():
+        result[entry_id] = {
+            **entry,
+            '_source': 'user',
+            '_readonly': False
+        }
+    
+    return jsonify(result)
+
 @api_bp.route('/catalog/<entry_id>', methods=['GET'])
 def get_catalog_entry(entry_id):
+    """Get a single catalog entry with metadata."""
     catalog = load_catalog()
     if entry_id not in catalog:
         return jsonify({'error': 'Entry not found'}), 404
-    return jsonify({entry_id: catalog[entry_id]})
+    
+    source = 'user' if is_user_entry(entry_id) else 'builtin'
+    entry_data = catalog[entry_id].copy()
+    entry_data['_source'] = source
+    entry_data['_readonly'] = source == 'builtin'
+    
+    return jsonify({entry_id: entry_data})
 
 @api_bp.route('/catalog/<entry_id>', methods=['PUT'])
 def update_catalog_entry(entry_id):
-    catalog = load_catalog()
-    if entry_id not in catalog:
+    """Update a catalog entry (only allowed for user entries)."""
+    # Check if entry is built-in (read-only)
+    if is_builtin_entry(entry_id):
+        return jsonify({'error': 'Cannot modify built-in catalog entries. They are read-only.'}), 403
+    
+    # Get the user catalog
+    catalogs = load_catalog_split()
+    user_catalog = catalogs['user']
+    
+    # Entry might be from user catalog or doesn't exist yet (new user entry)
+    if entry_id not in user_catalog and entry_id not in catalogs['builtin']:
         return jsonify({'error': 'Entry not found'}), 404
+    
+    # If it's from built-in, we already rejected it above
+    # Otherwise update the user catalog
     data = request.json
-    catalog[entry_id].update(data)
-    if save_catalog(catalog):
-        return jsonify({'status': 'updated', 'entry': catalog[entry_id]})
+    if entry_id not in user_catalog:
+        # Creating a new user entry (or overriding a built-in one)
+        user_catalog[entry_id] = {}
+    
+    user_catalog[entry_id].update(data)
+    
+    if save_user_catalog(user_catalog):
+        # Return merged view
+        merged = load_catalog()
+        entry_data = merged[entry_id].copy()
+        entry_data['_source'] = 'user'
+        entry_data['_readonly'] = False
+        return jsonify({'status': 'updated', 'entry': entry_data})
     return jsonify({'error': 'Failed to save'}), 500
 
 @api_bp.route('/catalog/<entry_id>', methods=['DELETE'])
 def delete_catalog_entry(entry_id):
-    catalog = load_catalog()
-    if entry_id not in catalog:
-        return jsonify({'error': 'Entry not found'}), 404
-    entry = catalog[entry_id]
+    """Delete a catalog entry (only allowed for user entries)."""
+    # Check if entry is built-in (cannot delete)
+    if is_builtin_entry(entry_id):
+        return jsonify({'error': 'Cannot delete built-in catalog entries. They are read-only.'}), 403
+    
+    # Get the catalog entries
+    catalogs = load_catalog_split()
+    user_catalog = catalogs['user']
+    
+    if entry_id not in user_catalog:
+        return jsonify({'error': 'Entry not found in user catalog'}), 404
+    
+    entry = user_catalog[entry_id]
+    
+    # Clean up associated files
     for key in ['audio', 'video', 'image']:
         if key in entry and entry[key]:
             try:
                 Path(entry[key]).unlink()
             except Exception as e:
                 print(f"Failed to delete {entry[key]}: {e}")
-    del catalog[entry_id]
-    if save_catalog(catalog):
+    
+    del user_catalog[entry_id]
+    
+    if save_user_catalog(user_catalog):
         return jsonify({'status': 'deleted'})
     return jsonify({'error': 'Failed to delete'}), 500
+
+@api_bp.route('/catalog/raw', methods=['PUT'])
+def update_catalog_raw():
+    """Replace entire user catalog with raw JSON. Built-in entries cannot be modified."""
+    try:
+        data = request.json
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Catalog must be a JSON object'}), 400
+        
+        # Validate that each entry has required fields
+        for entry_id, entry in data.items():
+            if not isinstance(entry, dict):
+                return jsonify({'error': f'Entry {entry_id} must be an object'}), 400
+            if 'type' not in entry:
+                return jsonify({'error': f'Entry {entry_id} missing required field: type'}), 400
+            if 'title' not in entry:
+                return jsonify({'error': f'Entry {entry_id} missing required field: title'}), 400
+        
+        if save_user_catalog(data):
+            return jsonify({'status': 'updated', 'entries': len(data)})
+        return jsonify({'error': 'Failed to save catalog'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Error: {str(e)}'}), 400
+
+# --- Audio Settings Routes ---
+
+@api_bp.route('/audio/devices', methods=['GET'])
+def get_audio_devices():
+    """Get available audio devices and current device"""
+    try:
+        available_devices = []
+        current_device = None
+        
+        # Query available sinks using pactl
+        try:
+            result = subprocess.run(
+                ["pactl", "list", "sinks", "short"],
+                capture_output=True,
+                text=True,
+                timeout=3
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            # pactl not available or timed out
+            return jsonify({'devices': [], 'current': None})
+        
+        # Map device names to friendly names
+        device_map = {
+            'headphones': 'Headphones',
+            'usb': 'USB Audio',
+            'hdmi': 'HDMI',
+            'analog': 'Analog',
+            'speaker': 'Speakers'
+        }
+        
+        seen_devices = set()
+        for line in result.stdout.splitlines():
+            if line.strip():
+                parts = line.split()
+                if len(parts) >= 2:
+                    device_name = parts[1].lower()
+                    
+                    # Determine friendly name
+                    friendly_name = 'Unknown'
+                    for key, value in device_map.items():
+                        if key in device_name:
+                            friendly_name = value
+                            break
+                    else:
+                        # Use the device name as-is if no match
+                        friendly_name = parts[1] if len(parts) > 1 else f"Device {len(available_devices)}"
+                    
+                    # Avoid duplicates
+                    if friendly_name not in seen_devices:
+                        available_devices.append({
+                            'name': friendly_name,
+                            'id': parts[0]
+                        })
+                        seen_devices.add(friendly_name)
+        
+        # Get current default sink
+        try:
+            result = subprocess.run(
+                ["pactl", "get-default-sink"],
+                capture_output=True,
+                text=True,
+                timeout=3
+            )
+            current_sink = result.stdout.strip()
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            current_sink = None
+        
+        # Map current sink to friendly name
+        if current_sink:
+            for device in available_devices:
+                if device['id'] == current_sink:
+                    current_device = device['name']
+                    break
+        
+        if not current_device and available_devices:
+            current_device = available_devices[0]['name']
+        
+        return jsonify({
+            'devices': available_devices,
+            'current': current_device
+        })
+    except Exception as e:
+        print(f"[!] Audio devices endpoint error: {e}")
+        return jsonify({'error': f'Failed to query devices: {str(e)}', 'devices': [], 'current': None}), 500
+
+@api_bp.route('/audio/device', methods=['PUT'])
+def set_audio_device():
+    """Set the current audio device"""
+    try:
+        data = request.json
+        device_name = data.get('device')
+        
+        if not device_name:
+            return jsonify({'error': 'Device name required'}), 400
+        
+        # Get available devices to find the sink ID
+        try:
+            result = subprocess.run(
+                ["pactl", "list", "sinks", "short"],
+                capture_output=True,
+                text=True,
+                timeout=3
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return jsonify({'error': 'Audio system not available'}), 503
+        
+        target_sink = None
+        device_name_lower = device_name.lower()
+        
+        for line in result.stdout.splitlines():
+            if line.strip():
+                parts = line.split()
+                if len(parts) >= 2:
+                    current_name = parts[1].lower()
+                    # Match by device ID or by matching device name substring
+                    if (parts[0] == device_name or 
+                        device_name_lower in current_name or
+                        current_name in device_name_lower):
+                        target_sink = parts[0]
+                        break
+        
+        if not target_sink:
+            return jsonify({'error': f'Device not found: {device_name}'}), 404
+        
+        # Set as default sink
+        try:
+            subprocess.run(
+                ["pactl", "set-default-sink", target_sink],
+                capture_output=True,
+                timeout=3,
+                check=False
+            )
+        except FileNotFoundError:
+            pass
+        
+        return jsonify({'status': 'ok', 'device': device_name})
+    except Exception as e:
+        print(f"[!] Set audio device endpoint error: {e}")
+        return jsonify({'error': f'Failed to set device: {str(e)}'}), 500
+
+@api_bp.route('/audio/volume', methods=['GET'])
+def get_audio_volume():
+    """Get current audio volume (0-100)"""
+    try:
+        # Get volume from default sink
+        try:
+            result = subprocess.run(
+                ["pactl", "get-sink-volume", "@DEFAULT_SINK@"],
+                capture_output=True,
+                text=True,
+                timeout=3
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            # pactl not available
+            return jsonify({'volume': 50})
+        
+        # Parse output like "Volume: front-left: 65535 / 100% / 0.00 dB"
+        volume = 50
+        for line in result.stdout.splitlines():
+            if '%' in line:
+                # Extract percentage
+                import re
+                match = re.search(r'(\d+)%', line)
+                if match:
+                    volume = int(match.group(1))
+                    break
+        
+        return jsonify({'volume': volume})
+    except Exception as e:
+        print(f"[!] Audio volume get endpoint error: {e}")
+        return jsonify({'volume': 50})
+
+@api_bp.route('/audio/volume', methods=['PUT'])
+def set_audio_volume():
+    """Set audio volume (0-100)"""
+    try:
+        data = request.json
+        volume = int(data.get('volume', 50))
+        
+        # Clamp to 0-150 (PipeWire allows going above 100%)
+        volume = max(0, min(150, volume))
+        
+        # Set volume for all sinks
+        try:
+            subprocess.run(
+                ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{volume}%"],
+                capture_output=True,
+                timeout=3,
+                check=False
+            )
+        except FileNotFoundError:
+            # pactl not available, but don't fail
+            pass
+        
+        return jsonify({'status': 'ok', 'volume': volume})
+    except ValueError:
+        return jsonify({'error': 'Volume must be a number'}), 400
+    except Exception as e:
+        print(f"[!] Audio volume set endpoint error: {e}")
+        return jsonify({'error': f'Failed to set volume: {str(e)}'}), 500
 
 @api_bp.route('/upload', methods=['POST'])
 def upload_media():
@@ -151,7 +493,7 @@ def upload_media():
     if not valid:
         return jsonify({'error': msg}), 400
     safe_name = sanitize_filename(file.filename)
-    dest_dir = current_app.config['MEDIA_BASE'] / subdir
+    dest_dir = current_app.config['USER_MEDIA_BASE'] / subdir
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / safe_name
     try:
@@ -160,21 +502,22 @@ def upload_media():
         return jsonify({'error': f'Upload failed: {str(e)}'}), 500
     thumb_url = None
     if media_type == 'image':
-        thumb_dir = current_app.config['MEDIA_BASE'] / 'thumbnails'
+        thumb_dir = current_app.config['USER_MEDIA_BASE'] / 'thumbnails'
         thumb_path = generate_thumbnail(dest_path, thumb_dir)
         if thumb_path:
-            thumb_url = f'/opt/music-player/media/thumbnails/{thumb_path.name}'
+            thumb_url = f'/opt/music-player/user_media/thumbnails/{thumb_path.name}'
     timestamp = datetime.now().strftime('%s')
     entry_id = f"{media_type}_{timestamp}"
-    catalog = load_catalog()
-    catalog[entry_id] = {
+    catalogs = load_catalog_split()
+    user_catalog = catalogs['user']
+    user_catalog[entry_id] = {
         'type': media_type,
         'title': title,
         media_type: str(dest_path)
     }
     if media_type == 'image' and thumb_url:
-        catalog[entry_id]['image'] = str(dest_path)
-    if save_catalog(catalog):
+        user_catalog[entry_id]['image'] = str(dest_path)
+    if save_user_catalog(user_catalog):
         return jsonify({
             'status': 'ok',
             'entry_id': entry_id,

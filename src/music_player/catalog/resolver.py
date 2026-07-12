@@ -25,8 +25,9 @@ def _resolve_text_template(text):
 def extract_tag_payload(nfc_reader):
     """
     Reads the raw blocks of the NTAG sticker and searches for:
-    1. A song database ID key (e.g. "song_01", "song_02")
-    2. A legacy Linux absolute file path ending in .mp3
+    1. A Pokédex ID (e.g. "poke_010", "poke_ball" for random)
+    2. A song database ID key (e.g. "song_01", "song_02")
+    3. A legacy Linux absolute file path ending in .mp3
     """
     raw_data = bytearray()
     try:
@@ -40,6 +41,11 @@ def extract_tag_payload(nfc_reader):
 
     # Decode bytes ignoring messy NDEF header characters
     text = raw_data.decode('ascii', errors='ignore')
+    
+    # Check for Pokédex tags (poke_XXX format)
+    match_poke = re.search(r'(poke_\w+)', text, re.IGNORECASE)
+    if match_poke:
+        return match_poke.group(1).lower()
     
     # Check catalog.json keys directly against raw text to bypass overlapping writes!
     catalog = load_catalog()
@@ -58,8 +64,40 @@ def resolve_playback_assets(payload):
     """
     Takes a tag payload and returns a dictionary with all metadata, including
     'audio', 'title', 'type', and 'artwork' (pre-rendered PIL image).
+    
+    Supports:
+    - Pokédex tags: poke_XXX (e.g., poke_025, poke_ball, poke_random)
+      Dynamically generates assets without needing catalog entries
+    - Catalog entries: from catalog.json
+    - Legacy paths: /home/.../*.mp3
     """
     catalog = load_catalog()
+    
+    # Handle Pokédex tags (poke_XXX) - generate assets dynamically
+    if payload and isinstance(payload, str) and payload.lower().startswith("poke_"):
+        poke_id = payload[5:]  # Remove "poke_" prefix
+        
+        # Resolve poke_ball or poke_random to "random" for handler
+        if poke_id.lower() in ("ball", "random"):
+            title = "Random Pokémon"
+            pokemon_id = "random"
+        else:
+            # Extract numeric ID
+            try:
+                numeric_id = int(poke_id)
+                title = f"Pokémon #{numeric_id}"
+                pokemon_id = numeric_id
+            except ValueError:
+                # Invalid format, return None
+                return None
+        
+        return {
+            "type": "pokedex",
+            "pokemon_id": pokemon_id,
+            "title": title,
+            "audio": "",
+            "artwork": None
+        }
     
     # Try database match
     if payload in catalog:

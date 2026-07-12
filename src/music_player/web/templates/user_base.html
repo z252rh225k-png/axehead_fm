@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Axehead FM{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
+</head>
+<body>
+    <div class="app-wrapper">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>{% block header_title %}Axehead FM{% endblock %}</h1>
+                </div>
+                <nav class="app-nav">
+                    {% block nav_items %}
+                    <a href="/api/user" class="nav-link">Home</a>
+                    {% endblock %}
+                </nav>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="container">
+                {% block content %}
+                <!-- Content goes here -->
+                {% endblock %}
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 Axehead FM</p>
+        </footer>
+    </div>
+
+    {% block scripts %}
+    <script>
+        // Shared utility functions for user tool
+        const API_BASE = '/api';
+
+        async function fetchJSON(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options,
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            return response.json();
+        }
+
+        function showNotification(message, type = 'info') {
+            console.log(`[${type}] ${message}`);
+            // Can be enhanced with a toast/notification UI component
+        }
+
+        function showError(message) {
+            showNotification(message, 'error');
+        }
+
+        function showSuccess(message) {
+            showNotification(message, 'success');
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

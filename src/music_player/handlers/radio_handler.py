@@ -9,12 +9,12 @@ class RadioHandler(BaseHandler):
     def play(self, assets, state, hardware_dict):
         stream_url = assets.get("stream_url", "")
         state.current_station_freq = assets.get("station_freq", "96.7")
-        state.radio_tune_start_time = time.time() # Mark start of retro search sweep!
+        state.radio_tune_start_time = time.time()
         print(f"Streaming radio: {state.current_title} ({stream_url})")
         
         if stream_url:
             try:
-                # Launch headless command line player for internet radio streams
+                # Launch mpv with default ALSA configuration from .asoundrc
                 self.active_radio_process = subprocess.Popen(
                     ["mpv", "--no-video", stream_url],
                     stdout=subprocess.DEVNULL,

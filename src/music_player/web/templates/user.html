@@ -1,0 +1,28 @@
+{% extends "user_base.html" %}
+
+{% block header_title %}Axehead FM - User Tool{% endblock %}
+
+{% block content %}
+
+<div class="welcome-card">
+    <h2>Welcome to Axehead FM</h2>
+    <p>Your music player control interface</p>
+</div>
+
+<!-- Feature sections will be added here -->
+<div class="features-grid">
+    <!-- Placeholder for future features -->
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // User tool initialization and event handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize user tool
+        console.log('User tool ready');
+    });
+</script>
+{% endblock %}

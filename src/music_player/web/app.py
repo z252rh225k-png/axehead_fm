@@ -16,8 +16,10 @@ def create_app(config_path=None):
     # Configuration
     app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max upload
     app.config['UPLOAD_TEMP'] = Path('/tmp/music-upload')
-    app.config['MEDIA_BASE'] = Path('/opt/music-player/media')
-    app.config['CATALOG_PATH'] = Path('/opt/music-player/catalog.json')
+    app.config['MEDIA_BASE'] = Path('/opt/music-player/media')  # Built-in media
+    app.config['USER_MEDIA_BASE'] = Path('/opt/music-player/user_media')  # User-editable media
+    app.config['CATALOG_PATH'] = Path('/opt/music-player/catalog.json')  # Built-in (backward compat)
+    app.config['USER_CATALOG_PATH'] = Path('/opt/music-player/user_catalog.json')  # User-editable
     app.config['UPDATE_DIR'] = Path('/opt/music-player/updates')
     app.config['UPDATE_ROOT'] = Path('/opt/music-player')
     app.config['UPDATE_SETTINGS_PATH'] = Path('/opt/music-player/update_settings.json')
@@ -26,6 +28,7 @@ def create_app(config_path=None):
     app.config['UPLOAD_TEMP'].mkdir(exist_ok=True)
     for subdir in ['audio', 'images', 'video', 'thumbnails']:
         (app.config['MEDIA_BASE'] / subdir).mkdir(parents=True, exist_ok=True)
+        (app.config['USER_MEDIA_BASE'] / subdir).mkdir(parents=True, exist_ok=True)
     
     # Initialize update handler and start worker thread
     from music_player.web.update_handler import UpdateHandler
